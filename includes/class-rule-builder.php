@@ -335,7 +335,6 @@ class WPWAF_Rule_Builder {
 				$parts[] = '(ip.src in {' . implode( ' ', $ips ) . '})';
 			}
 		}
-
 		if ( ! empty( $s['allow_user_agents'] ) && is_array( $s['allow_user_agents'] ) ) {
 			foreach ( $s['allow_user_agents'] as $ua ) {
 				$ua = trim( (string) $ua );
@@ -368,6 +367,10 @@ class WPWAF_Rule_Builder {
 				}
 			}
 		}
+
+
+
+
 		return [
 			'description'       => '[CF WAF] Allow Good Bots',
 			'expression'        => ! empty( $parts ) ? implode( ' or ', $parts ) : '(1 eq 0)',
