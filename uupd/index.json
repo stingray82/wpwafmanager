@@ -10,7 +10,7 @@
     "sections": {
         "changelog": "<li>There are no changes beyond the adding of new filters</li>"
     },
-    "last_updated": "2026-05-10 13:03:22",
+    "last_updated": "2026-05-10 13:07:17",
     "download_url": "https://github.com/stingray82/wpwafmanager/releases/latest/download/wp-waf-manager.zip",
     "banners": {
         "low": "https://raw.githubusercontent.com/stingray82/wpwafmanager/release/wpwaf-manager-fork/uupd/banner-772x250.png",
