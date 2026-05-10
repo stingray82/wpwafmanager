@@ -467,3 +467,18 @@ release/wpwaf-manager-fork
 ```text
 feature/extensible-rule1-allowlist
 ```
+
+
+
+
+
+Example FIlter
+
+```
+add_filter( 'wpwaf_rule1_extra_allow_expressions', function( array $expressions ): array {
+	$expressions[] = 'http.request.headers["x-trustwards-scanner"][0] eq "true"';
+
+	return $expressions;
+} );
+```
+
