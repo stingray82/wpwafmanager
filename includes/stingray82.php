@@ -16,7 +16,7 @@ add_action( 'plugins_loaded', function() {
 		'slug'        => 'wp-waf-manager-fork',
 		'name'        => 'WP WAF Manager',       // human‐readable plugin name
         'version'     => WPWAF_VERSION, // same as the VERSION constant above             // your secret key for private updater
-        'server'      => 'https://raw.githubusercontent.com/stingray82/wpwafmanager/main/uupd/index.json',
+        'server'      => 'https://raw.githubusercontent.com/stingray82/wpwafmanager/release/wpwaf-manager-fork/uupd/index.json',
     ];
 
     // 3) Call the helper in the UUPD\V2 namespace:
