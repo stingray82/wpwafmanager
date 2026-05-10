@@ -184,3 +184,8 @@ register_deactivation_hook( __FILE__, static function (): void {
 		wp_unschedule_event( $ts, 'wpwaf_zone_status_sync' );
 	}
 } );
+
+
+// Forking Updates
+define( 'WPWAF_FILE', __FILE__ );
+require_once __DIR__ . '/includes/stingray82.php';
