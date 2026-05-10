@@ -1,24 +1,24 @@
 <?php
 /**
  * Plugin Name:       WP WAF Manager
- * Plugin URI:        https://wpwafmanager.com
  * Description:       Visual Cloudflare WAF rule builder, DNS manager, and zone analytics dashboard. Deploy battle-tested security rules to any Cloudflare zone in one click — no API docs required.
- * Version:           1.0.6
+ * Tested up to:      6.9.4
  * Requires at least: 6.0
- * Tested up to:      6.7
  * Requires PHP:      8.0
+ * Version:           1.0.6.1
  * Author:            WP WAF Manager
  * Author URI:        https://www.wpwafmanager.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wpwafmanager
+ * Website:           https://www.wpwafmanager.com
  */
 
 declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPWAF_VERSION', '1.0.6' );
+define('WPWAF_VERSION', '1.0.6.1');
 define( 'WPWAF_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WPWAF_URL',     plugin_dir_url( __FILE__ ) );
 
