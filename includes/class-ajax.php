@@ -848,7 +848,27 @@ class WPWAF_Ajax {
 		if ( empty( $zone_id ) || empty( $rule_id ) ) {
 			wp_send_json_error( [ 'message' => 'zone_id and rule_id required.' ] ); wp_die();
 		}
-		$data = array_merge( $raw, [ 'enabled' => $enabled ] );
+		// Only pass known, safe fields to the API — never forward arbitrary keys from POST.
+		$data = [ 'enabled' => $enabled ];
+		if ( ! empty( $raw['name'] ) ) {
+			$data['name'] = sanitize_text_field( $raw['name'] );
+		}
+		if ( ! empty( $raw['matchers'] ) && is_array( $raw['matchers'] ) ) {
+			$data['matchers'] = array_map( fn( $m ) => [
+				'type'  => sanitize_text_field( $m['type']  ?? '' ),
+				'field' => sanitize_text_field( $m['field'] ?? '' ),
+				'value' => sanitize_email( $m['value'] ?? '' ),
+			], $raw['matchers'] );
+		}
+		if ( ! empty( $raw['actions'] ) && is_array( $raw['actions'] ) ) {
+			$allowed_action_types = [ 'forward', 'worker', 'drop' ];
+			$data['actions'] = array_map( fn( $a ) => [
+				'type'  => in_array( $a['type'] ?? '', $allowed_action_types, true ) ? $a['type'] : 'drop',
+				'value' => is_array( $a['value'] ?? null )
+					? array_map( 'sanitize_email', $a['value'] )
+					: [],
+			], $raw['actions'] );
+		}
 		$result = WPWAF_Accounts::api()->update_email_rule( $zone_id, $rule_id, $data );
 		$result['success'] ? wp_send_json_success( $result ) : wp_send_json_error( $result );
 		wp_die();

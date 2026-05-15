@@ -58,32 +58,25 @@ class License {
 	 */
 	public function activate( $key = '' ) {
 		try {
-			// Validate the license key and store it.
+			// validate the license and store it.
 			$license = $this->validate( $key, true );
-
-			// Create the activation record on SureCart.
+			// create the activation.
 			$activation = $this->client->activation()->create( $license->id );
 			if ( is_wp_error( $activation ) ) {
 				throw new \Exception( $activation->get_error_message() );
 			}
 			$this->client->settings()->activation_id = $activation->id;
-
-			// Validate the release — non-fatal. A release zip may not be uploaded to
-			// SureCart yet (e.g. during initial launch). The activation is still valid;
-			// auto-updates will work once a release is uploaded to the SureCart product.
-			try {
-				$this->validate_release();
-			} catch ( \Exception $e ) {
-				// Release not found — activation succeeds anyway.
-				// Auto-updates require a release to be uploaded in the SureCart dashboard.
-			}
+			// validate the release.
+			$this->validate_release();
 		} catch ( \Exception $e ) {
-			// Fatal error (bad license key, API error, etc.) — roll back.
-			$saved_activation_id = $this->client->settings()->get_option( 'sc_activation_id' );
-			if ( $saved_activation_id ) {
-				$this->client->activation()->delete( $saved_activation_id );
+			// undo activation.
+			$activation = $this->client->activation()->get();
+			if ( $activation ) {
+				$this->client->activation()->delete();
 			}
+			// on error, clear options.
 			$this->client->settings()->clear_options();
+			// return \WP_Error.
 			return new \WP_Error( 'error', $e->getMessage() );
 		}
 

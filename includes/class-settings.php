@@ -11,6 +11,9 @@ class WPWAF_Settings {
 
 	private const OPTION = 'wpwaf_plugin_settings';
 
+	/** In-request cache to avoid repeated get_option calls. */
+	private static ?array $cache = null;
+
 	/** Default values for every setting. */
 	public static function defaults(): array {
 		return [
@@ -38,8 +41,10 @@ class WPWAF_Settings {
 
 	/** Return all settings, merged with defaults. */
 	public static function all(): array {
-		$saved = get_option( self::OPTION, [] );
-		return wp_parse_args( is_array( $saved ) ? $saved : [], self::defaults() );
+		if ( self::$cache !== null ) return self::$cache;
+		$saved       = get_option( self::OPTION, [] );
+		self::$cache = wp_parse_args( is_array( $saved ) ? $saved : [], self::defaults() );
+		return self::$cache;
 	}
 
 	/** Return a single setting value. */
@@ -82,6 +87,7 @@ class WPWAF_Settings {
 			'keep_data_on_uninstall' => (bool) ( $raw['keep_data_on_uninstall'] ?? true ),
 		];
 		update_option( self::OPTION, $s, false );
+		self::$cache = null;
 		return $s;
 	}
 }

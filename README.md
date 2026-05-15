@@ -253,6 +253,14 @@ wpwafmanager/
 
 ## Changelog
 
+### 1.0.8 – May 2026
+- **Security:** Email rule update handler now validates and sanitizes each field individually before passing to Cloudflare API — previously forwarded raw POST JSON keys without validation.
+- **Security:** Update notifier internal constants made `private`.
+- **Performance:** `WPWAF_Settings::all()` now caches in-request — previously called `get_option()` on every invocation, causing multiple DB reads per page load.
+- **Performance:** IP access rule pagination converted from recursion to an iterative loop, eliminating stack risk on accounts with large rule sets.
+- **Performance:** Removed unused `get_zone_settings()` method that made 8 serial Cloudflare API calls — `get_all_zone_settings()` handles this in a single request.
+- **Code:** Removed unreachable duplicate error-check block in the security events GraphQL handler.
+
 ### 1.0.7 – May 2026
 - **Rule 1 (Allow Good Bots):** Added Custom User Agents allowlist. Enter user agent strings one per line to always skip all WAF rules. Uses substring matching (`http.user_agent contains`). Stored separately from base rules — survives wafrules.com ruleset updates without changes.
 - **Update notifier:** Free users see a dashboard notice when a new version is available on GitHub, with links to download free or upgrade to Pro for automatic updates. Pro users with an active license see nothing. Notice is dismissible and refreshes daily.

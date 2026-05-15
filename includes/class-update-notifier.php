@@ -14,19 +14,19 @@ defined( 'ABSPATH' ) || exit;
 class WPWAF_Update_Notifier {
 
 	/** GitHub raw URL for release.json. */
-	const REMOTE_JSON_URL = 'https://raw.githubusercontent.com/jaimealnassim/wpwafmanager/main/release.json';
+	private const REMOTE_JSON_URL = 'https://raw.githubusercontent.com/jaimealnassim/wpwafmanager/main/release.json';
 
 	/** Link shown for free users to download the latest zip. */
-	const GITHUB_RELEASES_URL = 'https://github.com/jaimealnassim/wpwafmanager/releases/latest';
+	private const GITHUB_RELEASES_URL = 'https://github.com/jaimealnassim/wpwafmanager/releases/latest';
 
 	/** Link shown to upgrade to Pro. */
-	const PRO_URL = 'https://wpwafmanager.com';
+	private const PRO_URL = 'https://wpwafmanager.com';
 
 	/** Transient key for cached remote version (24 h). */
-	const TRANSIENT_CHECK = 'wpwaf_update_check';
+	private const TRANSIENT_CHECK = 'wpwaf_update_check';
 
 	/** Transient key for dismissed state (24 h). */
-	const TRANSIENT_DISMISSED = 'wpwaf_update_dismissed';
+	private const TRANSIENT_DISMISSED = 'wpwaf_update_dismissed';
 
 	public static function init(): void {
 		add_action( 'admin_notices',  [ __CLASS__, 'maybe_show_notice' ] );

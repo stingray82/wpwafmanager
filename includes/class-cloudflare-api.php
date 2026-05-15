@@ -220,21 +220,6 @@ class WPWAF_API {
 
 	// ── Zone Settings ──────────────────────────────────────────────────────────
 
-	public function get_zone_settings( string $zone_id ): array {
-		$keys = [ 'security_level', 'ssl', 'development_mode', 'always_online',
-		           'cache_level', 'minify', 'rocket_loader', 'browser_cache_ttl' ];
-		$out = [];
-		foreach ( $keys as $key ) {
-			$r = $this->request( 'GET', "zones/{$zone_id}/settings/{$key}" );
-			if ( ! empty( $r['success'] ) ) {
-				$out[ $key ] = $r['result']['value'] ?? null;
-			}
-		}
-		// Under Attack Mode is security_level = 'under_attack'
-		$out['under_attack'] = ( ( $out['security_level'] ?? '' ) === 'under_attack' );
-		return [ 'success' => true, 'settings' => $out ];
-	}
-
 	public function update_zone_setting( string $zone_id, string $key, mixed $value ): array {
 		$result = $this->request( 'PATCH', "zones/{$zone_id}/settings/{$key}", [ 'value' => $value ] );
 		if ( empty( $result['success'] ) ) {
@@ -363,21 +348,20 @@ class WPWAF_API {
 
 	// ── Account-Level IP Access Rules ─────────────────────────────────────────
 
-	public function list_ip_rules( string $account_id, string $mode = '', int $page = 1 ): array {
-		$qs  = "per_page=100&page={$page}&order=configuration.value";
-		if ( $mode !== '' ) $qs .= "&mode={$mode}";
-		$result = $this->request( 'GET', "accounts/{$account_id}/firewall/access_rules/rules?{$qs}" );
-		if ( empty( $result['success'] ) ) {
-			return [ 'success' => false, 'message' => $this->first_error( $result ) ];
-		}
-		$rules      = $result['result'] ?? [];
-		$total_pages = (int) ( $result['result_info']['total_pages'] ?? 1 );
-		if ( $page < $total_pages ) {
-			$more = $this->list_ip_rules( $account_id, $mode, $page + 1 );
-			if ( ! empty( $more['success'] ) ) {
-				$rules = array_merge( $rules, $more['rules'] );
+	public function list_ip_rules( string $account_id, string $mode = '' ): array {
+		$rules = [];
+		$page  = 1;
+		do {
+			$qs     = "per_page=100&page={$page}&order=configuration.value";
+			if ( $mode !== '' ) $qs .= "&mode={$mode}";
+			$result = $this->request( 'GET', "accounts/{$account_id}/firewall/access_rules/rules?{$qs}" );
+			if ( empty( $result['success'] ) ) {
+				return [ 'success' => false, 'message' => $this->first_error( $result ) ];
 			}
-		}
+			$rules        = array_merge( $rules, $result['result'] ?? [] );
+			$total_pages  = (int) ( $result['result_info']['total_pages'] ?? 1 );
+			$page++;
+		} while ( $page <= $total_pages );
 		return [ 'success' => true, 'rules' => $rules ];
 	}
 
@@ -479,14 +463,7 @@ class WPWAF_API {
 
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), associative: true );
 		if ( ! empty( $decoded['errors'] ) ) {
-			$msg = $decoded['errors'][0]['message'] ?? 'GraphQL error';
-			return [ 'success' => false, 'message' => $msg ];
-		}
-
-		if ( ! empty( $decoded['errors'] ) ) {
 			$msg      = $decoded['errors'][0]['message'] ?? 'GraphQL error';
-			$path     = $decoded['errors'][0]['path'] ?? [];
-			// Detect Pro plan requirement
 			$plan_err = stripos( $msg, 'not entitled' ) !== false
 				|| stripos( $msg, 'plan' ) !== false
 				|| stripos( $msg, 'upgrade' ) !== false

@@ -12,7 +12,7 @@ class Client {
 	 *
 	 * @var string
 	 */
-	public $version = '1.0.1';
+	public $version = '1.0.2';
 
 	/**
 	 * Name of the plugin
@@ -115,7 +115,6 @@ class Client {
 	 */
 	public function __construct( $name, $public_token, $file = '' ) {
 		$this->name = $name;
-
 		// handle backwards compatibility.
 		if ( ! empty( $file ) ) {
 			$this->file         = $file;
@@ -223,7 +222,7 @@ class Client {
 			list( $this->slug ) = explode( '/', $this->basename );
 
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-
+		
 			$plugin_data = get_plugin_data( $this->file );
 
 			if ( empty( $plugin_data['Version'] ) ) {
