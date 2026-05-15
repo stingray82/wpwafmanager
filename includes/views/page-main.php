@@ -347,6 +347,13 @@
 						<p class="cfwaf-hint cfwaf-hint-muted" id="cfwaf-allow-ips-count"></p>
 					</div>
 
+					<div class="cfwaf-section">
+						<h4>Custom User Agents to Allow</h4>
+						<p class="cfwaf-hint">Enter user agent strings to always skip all WAF rules. One per line. Uses a substring match &mdash; e.g. <code>SiteGuruCrawler</code> will match any user agent containing that string. To find blocked user agents, check <strong>Security &rarr; Events</strong> in your Cloudflare dashboard.</p>
+						<textarea id="cfwaf-allow-uas" class="cfwaf-ip-textarea" rows="4" placeholder="SiteGuruCrawler&#10;Google-NotebookLM&#10;MyCustomBot" spellcheck="false" autocomplete="off"></textarea>
+						<p class="cfwaf-hint cfwaf-hint-muted" id="cfwaf-allow-uas-count"></p>
+					</div>
+
 					<div class="cfwaf-notice cfwaf-notice-api-skip">
 						<div class="cfwaf-notice-api-icon">
 							<span class="dashicons dashicons-cloud"></span>

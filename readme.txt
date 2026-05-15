@@ -4,7 +4,7 @@ Tags: waf, firewall, dns, security, cloudflare, ip blocking, email routing, cach
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ Deploy and manage your entire Cloudflare security stack from WordPress — WAF r
 
 Deploy five pre-configured, battle-tested security rules to any Cloudflare zone in one click, based on the open-source [wafrules.com](https://wafrules.com) ruleset:
 
-* **Allow Good Bots** — Whitelist Cloudflare verified bot categories (Googlebot, Bingbot, uptime monitors, payment processors) plus a custom IP allowlist
+* **Allow Good Bots** — Whitelist Cloudflare verified bot categories (Googlebot, Bingbot, uptime monitors, payment processors) plus a custom IP allowlist and custom user agent allowlist
 * **Block Aggressive Crawlers** — Block SEO scrapers, exploit scanners (SQLMap, Nikto, Masscan, Nmap), and sensitive WordPress paths (xmlrpc.php, wp-config.php, install.php)
 * **Block Web Hosts & TOR** — Block traffic from cloud hosting ASNs (DigitalOcean, Vultr, Hetzner, OVH, Contabo, and more) and TOR exit nodes
 * **Challenge Large Cloud Providers** — Managed challenge for AWS EC2, Google Cloud, and Azure traffic
@@ -156,6 +156,10 @@ The free version on GitHub is fully featured. Pro at [wpwafmanager.com](https://
 Zone Analytics starts with no zones selected and auto-sync off. This prevents surprise API calls to Cloudflare on first activation. Select your zones in Zone Analytics → Settings and enable auto-sync when ready.
 
 == Changelog ==
+
+= 1.0.7 – May 2026 =
+* Rule 1 (Allow Good Bots): added Custom User Agents allowlist — enter user agent strings one per line to skip all WAF rules, identical pattern to the existing custom IP allowlist. Survives base rule updates.
+* Added update notifier — free users see a dashboard notice when a new version is available on GitHub, with links to download free or upgrade to Pro for automatic updates. Pro users with an active license see nothing. Notice is dismissible and refreshes daily.
 
 = 1.0.6 – May 2026 =
 * Updated bundled wafrules.com ruleset to May 1, 2026

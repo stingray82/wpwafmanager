@@ -86,6 +86,12 @@
 			setVal(settings, 'rule1.allow_ips', ips);
 		}
 
+		const uaTA = document.getElementById('cfwaf-allow-uas');
+		if (uaTA) {
+			const uas = uaTA.value.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s !== ''; });
+			setVal(settings, 'rule1.allow_user_agents', uas);
+		}
+
 		qsa('[data-setting]').forEach(function (el) {
 			const key = el.dataset.setting;
 			if (el.type === 'checkbox') {
@@ -112,6 +118,13 @@
 			const savedIPs = getVal(settings, 'rule1.allow_ips') || [];
 			ipTA2.value = savedIPs.join('\n');
 			updateIPCount();
+		}
+
+		const uaTA2 = document.getElementById('cfwaf-allow-uas');
+		if (uaTA2) {
+			const savedUAs = getVal(settings, 'rule1.allow_user_agents') || [];
+			uaTA2.value = savedUAs.join('\n');
+			updateUACount();
 		}
 
 		qsa('[data-setting]').forEach(function (el) {
@@ -831,6 +844,19 @@
 		updateIPCount();
 	});
 
+	// ── Custom UA allowlist textarea ──────────────────────────────────────────
+	function updateUACount() {
+		const ta = document.getElementById('cfwaf-allow-uas');
+		const countEl = document.getElementById('cfwaf-allow-uas-count');
+		if (!ta || !countEl) return;
+		const uas = ta.value.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s !== ''; });
+		countEl.textContent = uas.length ? uas.length + ' user agent' + (uas.length !== 1 ? 's' : '') + ' allowlisted' : '';
+	}
+	on(document.getElementById('cfwaf-allow-uas'), 'input', function() {
+		syncFromUI();
+		updateUACount();
+	});
+
 	// ── Expose settings helpers for export/import IIFE ───────────────────────
 	window._cfwafGetSettings = function() { return settings; };
 	window._cfwafSetSettings = function(s) { settings = s; };
@@ -864,6 +890,7 @@
 			enabled: 'boolean',
 			verified_categories: 'array',
 			allow_ips: 'array',
+			allow_user_agents: 'array',
 			allow_backupbuddy: 'boolean', allow_blogvault: 'boolean', allow_updraftplus: 'boolean',
 			allow_betterstack: 'boolean', allow_gtmetrix: 'boolean', allow_pingdom: 'boolean',
 			allow_statuscake: 'boolean', allow_uptimerobot: 'boolean', allow_cf_image: 'boolean',

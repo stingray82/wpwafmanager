@@ -59,6 +59,7 @@ class WPWAF_Rule_Builder {
 				'allow_wpumbrella'     => false,
 				'allow_letsencrypt'    => true,
 				'allow_ips'            => [],
+				'allow_user_agents'    => [],
 			],
 			'rule2' => [
 				'enabled'              => true,
@@ -217,6 +218,17 @@ class WPWAF_Rule_Builder {
 			) );
 		}
 
+		// Sanitize allow_user_agents — strip empty lines, limit length per entry.
+		if ( isset( $out['rule1']['allow_user_agents'] ) ) {
+			$out['rule1']['allow_user_agents'] = array_values( array_filter(
+				array_map(
+					fn( string $ua ) => substr( trim( $ua ), 0, 200 ),
+					$out['rule1']['allow_user_agents']
+				),
+				fn( string $ua ) => $ua !== ''
+			) );
+		}
+
 		return $out;
 	}
 
@@ -288,6 +300,16 @@ class WPWAF_Rule_Builder {
 			}
 			if ( ! empty( $ips ) ) {
 				$parts[] = '(ip.src in {' . implode( ' ', $ips ) . '})';
+			}
+		}
+
+		if ( ! empty( $s['allow_user_agents'] ) && is_array( $s['allow_user_agents'] ) ) {
+			foreach ( $s['allow_user_agents'] as $ua ) {
+				$ua = trim( (string) $ua );
+				if ( $ua !== '' ) {
+					$escaped = str_replace( '"', '\\"', $ua );
+					$parts[] = "(http.user_agent contains \"{$escaped}\")";
+				}
 			}
 		}
 

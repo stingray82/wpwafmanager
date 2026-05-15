@@ -248,7 +248,23 @@ wpwafmanager/
 | Plugin Settings | ✅ | ✅ |
 | Automatic WP updates | ❌ | ✅ |
 | Priority support | ❌ | ✅ |
-| Upcoming premium features | ❌ | ✅ |
+
+---
+
+## Changelog
+
+### 1.0.7 – May 2026
+- **Rule 1 (Allow Good Bots):** Added Custom User Agents allowlist. Enter user agent strings one per line to always skip all WAF rules. Uses substring matching (`http.user_agent contains`). Stored separately from base rules — survives wafrules.com ruleset updates without changes.
+- **Update notifier:** Free users see a dashboard notice when a new version is available on GitHub, with links to download free or upgrade to Pro for automatic updates. Pro users with an active license see nothing. Notice is dismissible and refreshes daily.
+
+### 1.0.6 – May 2026
+- Updated bundled wafrules.com ruleset to May 1, 2026
+- Rule 2: Added time-delay/blind SQLi and encoded LFI/path traversal patterns
+- Rule 4 (Challenge VPN): Expanded VPN provider ASN list (IPVanish, QuadraNet, Mullvad, PrivateLayer, and more)
+- Rule 5 (Block Web Hosts): Added HostRoyale and Cloudvider; expanded LeaseWeb and GoDaddy ASNs
+
+### 1.0.0 – April 2026
+- Initial public release
 
 ---
 

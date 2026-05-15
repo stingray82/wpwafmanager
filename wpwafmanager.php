@@ -3,7 +3,7 @@
  * Plugin Name:       WP WAF Manager
  * Plugin URI:        https://wpwafmanager.com
  * Description:       Visual Cloudflare WAF rule builder, DNS manager, and zone analytics dashboard. Deploy battle-tested security rules to any Cloudflare zone in one click — no API docs required.
- * Version:           1.0.6
+ * Version:           1.0.7
  * Requires at least: 6.0
  * Tested up to:      6.7
  * Requires PHP:      8.0
@@ -18,7 +18,7 @@ declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPWAF_VERSION', '1.0.6' );
+define( 'WPWAF_VERSION', '1.0.7' );
 define( 'WPWAF_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WPWAF_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -49,6 +49,7 @@ require_once WPWAF_DIR . 'includes/class-dns.php';
 require_once WPWAF_DIR . 'includes/class-zone-status.php';
 require_once WPWAF_DIR . 'includes/class-admin.php';
 require_once WPWAF_DIR . 'includes/class-ajax.php';
+require_once WPWAF_DIR . 'includes/class-update-notifier.php';
 
 // ── Admin bar quick-purge & first-run notice ──────────────────────────────────
 add_action( 'admin_bar_menu', static function ( WP_Admin_Bar $bar ): void {
@@ -159,6 +160,7 @@ add_action( 'plugins_loaded', static function (): void {
 	WPWAF_Admin::init();
 	WPWAF_Ajax::init();
 	WPWAF_Zone_Status::init();
+	WPWAF_Update_Notifier::init();
 } );
 
 register_activation_hook( __FILE__, static function (): void {
