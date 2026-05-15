@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 class WPWAF_Rule_Builder {
 
 	public static function default_settings(): array {
-		return [
+		$settings = [
 			'rule1' => [
 				'enabled'              => true,
 				// Default: 10 core verified categories (matching wafrules.com screenshot)
@@ -134,6 +134,9 @@ class WPWAF_Rule_Builder {
 				'challenge_wplogin'    => true,
 			],
 		];
+
+		return apply_filters( 'wpwaf_default_settings', $settings );
+
 	}
 
 	public static function build_rules( array $settings ): array {
@@ -280,9 +283,37 @@ class WPWAF_Rule_Builder {
 			'allow_wpumbrella'     => [ 'WPUmbrella' ],
 		];
 
+		/**
+		 * Filter Rule 1 user-agent allow map.
+		 *
+		 * This allows plugins/themes to register additional toggleable UA services.
+		 * To persist new toggle keys, also extend `wpwaf_default_settings`.
+		 */
+		$ua_map = apply_filters( 'wpwaf_rule1_ua_map', $ua_map, $s );
+
 		foreach ( $ua_map as $key => $uas ) {
-			if ( ! empty( $s[ $key ] ) ) {
+			if ( ! empty( $s[ $key ] ) && is_array( $uas ) ) {
 				foreach ( $uas as $ua ) {
+					$ua = self::escape_cf_string( (string) $ua );
+					if ( $ua !== '' ) {
+						$parts[] = "(http.user_agent contains \"{$ua}\")";
+					}
+				}
+			}
+		}
+
+		/**
+		 * Filter additional always-allowed user agents for Rule 1.
+		 *
+		 * These do not require saved settings toggles and are intended for
+		 * programmatic allow-listing.
+		 */
+		$extra_user_agents = apply_filters( 'wpwaf_rule1_extra_user_agents', [], $s );
+
+		if ( is_array( $extra_user_agents ) ) {
+			foreach ( $extra_user_agents as $ua ) {
+				$ua = self::escape_cf_string( (string) $ua );
+				if ( $ua !== '' ) {
 					$parts[] = "(http.user_agent contains \"{$ua}\")";
 				}
 			}
@@ -294,10 +325,12 @@ class WPWAF_Rule_Builder {
 
 		if ( ! empty( $s['allow_ips'] ) && is_array( $s['allow_ips'] ) ) {
 			$ips = [];
+
 			foreach ( $s['allow_ips'] as $ip ) {
 				$ip = trim( (string) $ip );
 				if ( $ip !== '' ) $ips[] = "\"{$ip}\"";
 			}
+
 			if ( ! empty( $ips ) ) {
 				$parts[] = '(ip.src in {' . implode( ' ', $ips ) . '})';
 			}
@@ -313,6 +346,28 @@ class WPWAF_Rule_Builder {
 			}
 		}
 
+		/**
+		 * Filter additional complete Cloudflare allow expressions for Rule 1.
+		 *
+		 * Each item must be a valid Cloudflare expression fragment.
+		 *
+		 * Example:
+		 * add_filter( 'wpwaf_rule1_extra_allow_expressions', function( array $expressions ): array {
+		 *     $expressions[] = 'http.request.headers["x-trustwards-scanner"][0] eq "true"';
+		 *     return $expressions;
+		 * } );
+		 */
+		$extra_expressions = apply_filters( 'wpwaf_rule1_extra_allow_expressions', [], $s );
+
+		if ( is_array( $extra_expressions ) ) {
+			foreach ( $extra_expressions as $expr ) {
+				$expr = trim( (string) $expr );
+
+				if ( $expr !== '' ) {
+					$parts[] = '(' . $expr . ')';
+				}
+			}
+		}
 		return [
 			'description'       => '[CF WAF] Allow Good Bots',
 			'expression'        => ! empty( $parts ) ? implode( ' or ', $parts ) : '(1 eq 0)',
@@ -503,5 +558,12 @@ class WPWAF_Rule_Builder {
 			$parts[] = '(http.request.uri.path contains "wp-login.php")';
 		}
 		return implode( ' or ', $parts );
+	}
+
+	private static function escape_cf_string( string $value ): string {
+		$value = trim( $value );
+		$value = str_replace( [ '\\', '"' ], [ '\\\\', '\\"' ], $value );
+
+		return $value;
 	}
 }
