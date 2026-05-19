@@ -253,6 +253,9 @@ wpwafmanager/
 
 ## Changelog
 
+### 1.0.9 – May 2026
+- **Fixed:** IPv6 addresses in the custom IP allowlist caused a Cloudflare "expected IP address character" error. Cloudflare's `ip.src in {}` syntax requires unquoted IPs — the rule builder was incorrectly wrapping every address in double quotes. IPv4, IPv6, and CIDR ranges all now generate the correct unquoted syntax.
+
 ### 1.0.8 – May 2026
 - **Security:** Email rule update handler now validates and sanitizes each field individually before passing to Cloudflare API — previously forwarded raw POST JSON keys without validation.
 - **Security:** Update notifier internal constants made `private`.

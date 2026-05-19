@@ -4,7 +4,7 @@ Tags: waf, firewall, dns, security, cloudflare, ip blocking, email routing, cach
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -156,6 +156,9 @@ The free version on GitHub is fully featured. Pro at [wpwafmanager.com](https://
 Zone Analytics starts with no zones selected and auto-sync off. This prevents surprise API calls to Cloudflare on first activation. Select your zones in Zone Analytics → Settings and enable auto-sync when ready.
 
 == Changelog ==
+
+= 1.0.9 – May 2026 =
+* Fixed: IPv6 addresses in the custom IP allowlist caused a Cloudflare "expected IP address character" error. IP addresses in ip.src expressions must not be quoted — the rule builder was wrapping every IP in double quotes. Fixed; IPv4, IPv6, and CIDR ranges all now generate the correct unquoted syntax.
 
 = 1.0.8 – May 2026 =
 * Security: email rule update handler now validates and sanitizes each field individually before passing to the Cloudflare API, rather than forwarding raw POST JSON

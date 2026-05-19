@@ -296,7 +296,7 @@ class WPWAF_Rule_Builder {
 			$ips = [];
 			foreach ( $s['allow_ips'] as $ip ) {
 				$ip = trim( (string) $ip );
-				if ( $ip !== '' ) $ips[] = "\"{$ip}\"";
+				if ( $ip !== '' ) $ips[] = $ip;
 			}
 			if ( ! empty( $ips ) ) {
 				$parts[] = '(ip.src in {' . implode( ' ', $ips ) . '})';
