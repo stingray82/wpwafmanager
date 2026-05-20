@@ -94,13 +94,13 @@ Do not put custom filters, updater code, or deployment changes directly on `main
 Start by switching to:
 
 ```text
-patch/wpwaf-custom-filters
+ feature/extensible-rule1-allowlist
 ```
 
 ## Commands
 
 ```bash
-git checkout patch/wpwaf-custom-filters
+git checkout  feature/extensible-rule1-allowlist
 git fetch upstream
 git rebase upstream/main
 ```
@@ -110,7 +110,7 @@ git rebase upstream/main
 Stay on:
 
 ```text
-patch/wpwaf-custom-filters
+ feature/extensible-rule1-allowlist
 ```
 
 Then check what needs resolving:
@@ -137,13 +137,13 @@ git rebase --abort
 Still on:
 
 ```text
-patch/wpwaf-custom-filters
+ feature/extensible-rule1-allowlist
 ```
 
 Run:
 
 ```bash
-git push origin patch/wpwaf-custom-filters --force-with-lease
+git push  feature/extensible-rule1-allowlist --force-with-lease
 ```
 
 ---
@@ -480,5 +480,21 @@ add_filter( 'wpwaf_rule1_extra_allow_expressions', function( array $expressions 
 
 	return $expressions;
 } );
+```
+
+
+
+
+
+```
+git fetch upstream
+git checkout feature/extensible-rule1-allowlist
+git rebase upstream/main
+# fix only if needed
+
+git checkout release/wpwaf-manager-fork
+git rebase feature/extensible-rule1-allowlist
+git push origin release/wpwaf-manager-fork --force-with-lease
+sh deploy.sh
 ```
 
