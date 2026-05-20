@@ -253,6 +253,9 @@ wpwafmanager/
 
 ## Changelog
 
+### 1.0.10 – May 2026
+- **Improved:** When a deploy fails because the rule expression exceeds Cloudflare's 4096-character limit (error 20127), the error message now includes a plain-English explanation and directs you to move IPs to the IP Access Rules module to reduce expression size.
+
 ### 1.0.9 – May 2026
 - **Fixed:** IPv6 addresses in the custom IP allowlist caused a Cloudflare "expected IP address character" error. Cloudflare's `ip.src in {}` syntax requires unquoted IPs — the rule builder was incorrectly wrapping every address in double quotes. IPv4, IPv6, and CIDR ranges all now generate the correct unquoted syntax.
 

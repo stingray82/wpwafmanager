@@ -59,7 +59,11 @@ class WPWAF_API {
 	private function first_error( array $result ): string {
 		$msg  = $result['errors'][0]['message'] ?? 'Unknown Cloudflare API error';
 		$code = $result['errors'][0]['code'] ?? '';
-		return $code ? "[{$code}] {$msg}" : $msg;
+		$out  = $code ? "[{$code}] {$msg}" : $msg;
+		if ( (int) $code === 20127 ) {
+			$out .= ' — Your rule expression exceeds Cloudflare\'s 4096-character limit. Try moving some IPs from the Custom IP Allowlist to the IP Access Rules module instead.';
+		}
+		return $out;
 	}
 
 	public function verify_credentials(): array {
