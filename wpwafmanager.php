@@ -6,7 +6,7 @@
  * Tested up to:      6.9.4
  * Requires at least: 6.0
  * Requires PHP:      8.0
- * Version:           1.0.8.1
+ * Version:           1.0.10.1
  * Author:            WP WAF Manager
  * Author URI:        https://www.wpwafmanager.com
  * License:           GPL-2.0-or-later
