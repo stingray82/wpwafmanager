@@ -1172,7 +1172,17 @@ window.cfWAF = <?php
 		'defaults'   => WPWAF_Rule_Builder::default_settings(),
 		'has_creds'  => $has_creds,
 		'expires_at' => (int) ( $active['expires_at'] ?? 0 ),
-		'accounts'   => WPWAF_Accounts::all(),
+		'accounts'   => array_map( function( $acc ) {
+			return [
+				'id'            => $acc['id']          ?? '',
+				'label'         => $acc['label']        ?? '',
+				'auth_method'   => $acc['auth_method']  ?? 'token',
+				'has_api_token' => ! empty( $acc['api_token'] ),
+				'has_api_key'   => ! empty( $acc['api_key'] ),
+				'expires_at'    => (int) ( $acc['expires_at'] ?? 0 ),
+				'readonly'      => (bool) ( $acc['readonly']  ?? false ),
+			];
+		}, WPWAF_Accounts::all() ),
 		'active_id'  => WPWAF_Accounts::active_id(),
 	] );
 ?>;

@@ -253,6 +253,12 @@ wpwafmanager/
 
 ## Changelog
 
+### 1.0.12 – May 2026
+- **Security:** Decrypted Cloudflare API credentials were included in the `window.cfWAF.accounts` JavaScript object output on the WAF Rules admin page. Any script running on the admin page could read the token from the browser console or via XSS. The accounts array passed to the frontend now contains only safe display fields (`id`, `label`, `auth_method`, `has_api_token`, `has_api_key`) — credentials are never sent to the browser.
+
+### 1.0.11 – May 2026
+- **Fixed:** Removed Minification (JS/CSS/HTML) from Zone Settings — Cloudflare deprecated and removed their Minify API in 2024. The setting was causing a "minify is not defined" error when loading Zone Settings for any zone.
+
 ### 1.0.10 – May 2026
 - **Improved:** When a deploy fails because the rule expression exceeds Cloudflare's 4096-character limit (error 20127), the error message now includes a plain-English explanation and directs you to move IPs to the IP Access Rules module to reduce expression size.
 

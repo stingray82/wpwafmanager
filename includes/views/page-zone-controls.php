@@ -386,14 +386,6 @@ function settingsHTML(zoneId, s){
       tog('hotlink_protection', hotlink, 'green')),
     row('✉ Email Obfuscation', 'Hide email addresses from scrapers',
       tog('email_obfuscation', emailObf, 'green')),
-    `<div class="cfwaf-zc-setting-row">
-      <div><div class="cfwaf-zc-setting-name">📦 Minification</div><div class="cfwaf-zc-setting-hint">Minify JS/CSS/HTML at Cloudflare edge</div></div>
-      <div class="cfwaf-zc-setting-control" style="display:flex;gap:8px;align-items:center;">
-        <label style="font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="cfwaf-zc-minify" data-zone="${zoneId}" data-type="js" ${minify.js==='on'?'checked':''} style="accent-color:var(--zc-orange)"> JS</label>
-        <label style="font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="cfwaf-zc-minify" data-zone="${zoneId}" data-type="css" ${minify.css==='on'?'checked':''} style="accent-color:var(--zc-orange)"> CSS</label>
-        <label style="font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="cfwaf-zc-minify" data-zone="${zoneId}" data-type="html" ${minify.html==='on'?'checked':''} style="accent-color:var(--zc-orange)"> HTML</label>
-      </div>
-    </div>`,
   ].join('');
 }
 
