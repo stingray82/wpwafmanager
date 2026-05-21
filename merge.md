@@ -143,7 +143,7 @@ Still on:
 Run:
 
 ```bash
-git push  feature/extensible-rule1-allowlist --force-with-lease
+git push feature/extensible-rule1-allowlist --force-with-lease
 ```
 
 ---
@@ -171,6 +171,23 @@ git push origin release/wpwaf-manager-fork --force-with-lease
 This makes the release branch identical to your tested patch branch.
 
 Live updater metadata should come from this branch.
+
+Fix files
+
+```
+git add wpwafmanager.php
+GIT_EDITOR=true git rebase --continue
+```
+
+Then 
+
+```
+git status
+git push origin release/wpwaf-manager-fork --force-with-lease
+sh deploy.sh
+```
+
+
 
 ---
 
