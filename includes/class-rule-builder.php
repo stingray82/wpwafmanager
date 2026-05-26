@@ -560,6 +560,30 @@ class WPWAF_Rule_Builder {
 		if ( ! empty( $s['challenge_wplogin'] ) ) {
 			$parts[] = '(http.request.uri.path contains "wp-login.php")';
 		}
+
+		/**
+		 * Filter additional complete Cloudflare managed-challenge expressions for Rule 5.
+		 *
+		 * Each item must be a valid Cloudflare expression fragment.
+		 *
+		 * Example:
+		 * add_filter( 'wpwaf_rule5_extra_challenge_expressions', function( array $expressions ): array {
+		 *     $expressions[] = 'http.request.uri.path contains "wp-cron.php"';
+		 *     return $expressions;
+		 * } );
+		 */
+		$extra_expressions = apply_filters( 'wpwaf_rule5_extra_challenge_expressions', [], $s );
+
+		if ( is_array( $extra_expressions ) ) {
+			foreach ( $extra_expressions as $expr ) {
+				$expr = trim( (string) $expr );
+
+				if ( $expr !== '' ) {
+					$parts[] = '(' . $expr . ')';
+				}
+			}
+		}
+
 		return implode( ' or ', $parts );
 	}
 
