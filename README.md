@@ -253,6 +253,12 @@ wpwafmanager/
 
 ## Changelog
 
+### 1.0.13 – May 2026
+- **Changed:** Synced with wafrules.com May 28, 2026 ruleset update.
+- **Rule 1:** Added six new optional verified bot categories: Aggregator, AI Assistant, AI Crawler, AI Search, Archiver, Social Media Marketing. All off by default.
+- **Rule 2:** Added `setup-config.php` to WordPress install path blocking. Added sensitive file exposure blocking (`/.env`, `/.git`, `composer.json`, `composer.lock`, `debug.log`, `phpunit`, `server-status`) — on by default.
+- **Rule 3:** Added five new exploit URI pattern groups (Union SQLi, expanded LFI/path traversal, legacy CGI/scanner paths, foreign CMS probes, reflected XSS) — all on by default, matching wafrules.com placement alongside Web Hosts/TOR.
+
 ### 1.0.12 – May 2026
 - **Security:** Decrypted Cloudflare API credentials were included in the `window.cfWAF.accounts` JavaScript object output on the WAF Rules admin page. Any script running on the admin page could read the token from the browser console or via XSS. The accounts array passed to the frontend now contains only safe display fields (`id`, `label`, `auth_method`, `has_api_token`, `has_api_key`) — credentials are never sent to the browser.
 

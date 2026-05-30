@@ -20,6 +20,13 @@ class WPWAF_Rule_Builder {
 					'Search Engine Crawler', 'Search Engine Optimization',
 					'Security', 'Webhooks',
 				],
+				// Optional verified bot categories — off by default (added May 2026)
+				'allow_aggregator'             => false,
+				'allow_ai_assistant'           => false,
+				'allow_ai_crawler'             => false,
+				'allow_ai_search'              => false,
+				'allow_archiver'               => false,
+				'allow_social_media_marketing' => false,
 				// All individual UA services are off by default — opt-in
 				'allow_backupbuddy'    => false,
 				'allow_blogvault'      => false,
@@ -87,6 +94,7 @@ class WPWAF_Rule_Builder {
 				'block_wlwmanifest'    => true,
 				'block_readme'         => true,
 				'block_license'        => true,
+				'block_sensitive_paths'=> true,
 				'block_sqli_sleep'     => true,
 				'block_path_traversal' => true,
 			],
@@ -108,6 +116,12 @@ class WPWAF_Rule_Builder {
 				'block_cloudvider' => true,
 				'block_tor'        => true,
 				'action'           => 'block',
+				// Exploit URI patterns (synced May 2026 — wafrules.com bundles these with Web Hosts/TOR)
+				'block_union_sqli'    => true,
+				'block_lfi_traversal' => true,
+				'block_legacy_paths'  => true,
+				'block_foreign_cms'   => true,
+				'block_reflected_xss' => true,
 			],
 			'rule4' => [
 				'enabled'           => true,
@@ -237,8 +251,23 @@ class WPWAF_Rule_Builder {
 
 		if ( ! empty( $s['verified_categories'] ) && is_array( $s['verified_categories'] ) ) {
 			$parts[] = '(cf.client.bot)';
-			$cats    = array_map( fn( $c ) => "\"{$c}\"", $s['verified_categories'] );
-			$parts[] = '(cf.verified_bot_category in {' . implode( ' ', $cats ) . '})';
+			$cats    = $s['verified_categories'];
+			// Append any optional categories the user has enabled
+			$optional_cats = [
+				'allow_aggregator'             => 'Aggregator',
+				'allow_ai_assistant'           => 'AI Assistant',
+				'allow_ai_crawler'             => 'AI Crawler',
+				'allow_ai_search'              => 'AI Search',
+				'allow_archiver'               => 'Archiver',
+				'allow_social_media_marketing' => 'Social Media Marketing',
+			];
+			foreach ( $optional_cats as $key => $cat ) {
+				if ( ! empty( $s[ $key ] ) && ! in_array( $cat, $cats, true ) ) {
+					$cats[] = $cat;
+				}
+			}
+			$cats_expr = array_map( fn( $c ) => "\"{$c}\"", $cats );
+			$parts[]   = '(cf.verified_bot_category in {' . implode( ' ', $cats_expr ) . '})';
 		}
 
 		$ua_map = [
@@ -360,13 +389,22 @@ class WPWAF_Rule_Builder {
 		if ( ! empty( $s['block_masscan'] )) $parts[] = '(http.user_agent contains "masscan")';
 		if ( ! empty( $s['block_nmap'] ) )   $parts[] = '(http.user_agent contains "nmap")';
 
-		if ( ! empty( $s['block_xmlrpc'] ) )      $parts[] = '(lower(http.request.uri.path) contains "xmlrpc")';
+		if ( ! empty( $s['block_xmlrpc'] ) )      $parts[] = '(lower(http.request.uri.path) contains "xmlrpc")';;
 		if ( ! empty( $s['block_wpconfig'] ) )    $parts[] = '(lower(http.request.uri.path) contains "wp-config")';
 		if ( ! empty( $s['block_wpjson'] ) )      $parts[] = '(lower(http.request.uri.path) contains "wp-json")';
-		if ( ! empty( $s['block_wpinstall'] ) )   $parts[] = '(lower(http.request.uri.path) contains "/install.php")';
+		if ( ! empty( $s['block_wpinstall'] ) ) {
+			$parts[] = '(lower(http.request.uri.path) contains "/install.php")';
+			$parts[] = '(lower(http.request.uri.path) contains "setup-config.php")';
+		}
 		if ( ! empty( $s['block_wlwmanifest'] ) ) $parts[] = '(lower(http.request.uri.path) contains "wlwmanifest")';
 		if ( ! empty( $s['block_readme'] ) )      $parts[] = '(lower(http.request.uri.path) contains "readme.html")';
-		if ( ! empty( $s['block_license'] ) )     $parts[] = '(lower(http.request.uri.path) contains "license.txt")';
+		if ( ! empty( $s['block_license'] ) )     $parts[] = '(lower(http.request.uri.path) contains "license.txt")';;
+
+		if ( ! empty( $s['block_sensitive_paths'] ) ) {
+			foreach ( [ '/.env', '/.git', 'composer.json', 'composer.lock', 'debug.log', 'phpunit', 'server-status' ] as $t ) {
+				$parts[] = "(lower(http.request.uri.path) contains \"{$t}\")";;
+			}
+		}
 
 		if ( ! empty( $s['block_sqli_sleep'] ) ) {
 			foreach ( [ 'pg_sleep', 'pg_sleep(', 'sleep(', 'benchmark(', 'dbms_pipe', 'receive_message', 'waitfor%20delay', 'waitfor+delay', 'waitfor%09delay' ] as $t ) {
@@ -422,6 +460,34 @@ class WPWAF_Rule_Builder {
 		if ( ! empty( $s['block_tor'] ) ) {
 			$parts[] = '(ip.src.country in {"T1"})';
 		}
+
+		// Exploit URI patterns (wafrules.com bundles these with Web Hosts/TOR — May 2026 sync)
+		if ( ! empty( $s['block_union_sqli'] ) ) {
+			foreach ( [ 'union%2f%2a%2a%2fselect', 'union%20select', 'information_schema', 'concat(', 'load_file(', 'into%20outfile' ] as $t ) {
+				$parts[] = "(lower(http.request.uri.query) contains \"{$t}\")";;
+			}
+		}
+		if ( ! empty( $s['block_lfi_traversal'] ) ) {
+			foreach ( [ '../', '..%5c', '%2e%2e', 'etc/passwd', '%2fetc%2fpasswd', '%252fetc', '%00', '%5c..%5c' ] as $t ) {
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+			}
+		}
+		if ( ! empty( $s['block_legacy_paths'] ) ) {
+			foreach ( [ 'smb2www.pl', 'smbshr.pl', 'story.pl', 'browserweb/portal/portalbanner.htm', 'about/frmabout.aspx', 'symantec.jsp', 'webman/info.cgi', 'smpwservicescgi.exe', 'printenv' ] as $t ) {
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+			}
+		}
+		if ( ! empty( $s['block_foreign_cms'] ) ) {
+			foreach ( [ '/symphony/', '/spip/', '/taskfreak/', '/temenos/', '/tembria/', '/sympa/', '/lists/remindpasswd', '/wws/remindpasswd', 'index.php?mode=administration', 'index.php?user/login', 'action=login&module=users' ] as $t ) {
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+			}
+		}
+		if ( ! empty( $s['block_reflected_xss'] ) ) {
+			foreach ( [ '<script', '%3cscript', 'javascript:', 'onerror=', 'onload=' ] as $t ) {
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+			}
+		}
+
 		if ( empty( $parts ) ) return null;
 
 		return [

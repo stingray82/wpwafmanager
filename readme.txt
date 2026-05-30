@@ -4,7 +4,7 @@ Tags: waf, firewall, dns, security, cloudflare, ip blocking, email routing, cach
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -156,6 +156,12 @@ The free version on GitHub is fully featured. Pro at [wpwafmanager.com](https://
 Zone Analytics starts with no zones selected and auto-sync off. This prevents surprise API calls to Cloudflare on first activation. Select your zones in Zone Analytics → Settings and enable auto-sync when ready.
 
 == Changelog ==
+
+= 1.0.13 – May 2026 =
+* Changed: synced with wafrules.com May 28, 2026 ruleset update
+* Rule 1: added six new optional verified bot categories — Aggregator, AI Assistant, AI Crawler, AI Search, Archiver, Social Media Marketing (all off by default, opt-in)
+* Rule 2: added setup-config.php to WordPress install path blocking; added sensitive file exposure blocking (.env, .git, composer.json, composer.lock, debug.log, phpunit, server-status) — on by default
+* Rule 3: added five new exploit URI pattern groups — Union SQLi, LFI/path traversal (expanded), legacy CGI/scanner paths, foreign CMS probes, reflected XSS — all on by default, matching wafrules.com placement
 
 = 1.0.12 – May 2026 =
 * Security: decrypted Cloudflare API credentials were included in the window.cfWAF.accounts JavaScript object output on the WAF Rules admin page. Any script running on the admin page could read the token. The accounts array passed to the frontend now contains only safe display fields (id, label, auth_method, has_api_token, has_api_key) — credentials are never sent to the browser.
