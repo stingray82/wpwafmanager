@@ -856,6 +856,7 @@
 					<div class="cfwaf-deploy-rules-summary" id="cfwaf-deploy-summary"></div>
 					<div id="cfwaf-deploy-results"></div>
 					<div class="cfwaf-deploy-footer">
+						<p class="cfwaf-deploy-save-reminder">&#9888; Remember to save any changes before deploying.</p>
 						<button class="cfwaf-btn cfwaf-btn-deploy cfwaf-btn-large" id="cfwaf-confirm-deploy" disabled>
 							<span class="dashicons dashicons-upload"></span> Deploy to Selected Zones
 						</button>

@@ -372,12 +372,14 @@
 	function buildRulesSummary() {
 		const el = qs('#cfwaf-deploy-summary');
 		if (!el) return;
+		const rule3Action = getVal(settings, 'rule3.action') === 'block' ? 'Block' : 'Challenge';
+		const rule3Label  = 'Web Hosts & TOR';
 		const rules = [
-			{ key: 'rule1', label: 'Allow Good Bots',                     action: 'Skip' },
-			{ key: 'rule2', label: 'Block Aggressive Crawlers & WP Paths', action: 'Block' },
-			{ key: 'rule3', label: 'Block Web Hosts & TOR',                action: getVal(settings, 'rule3.action') === 'block' ? 'Block' : 'Challenge' },
-			{ key: 'rule4', label: 'Challenge Large Providers / Country',  action: 'Challenge' },
-			{ key: 'rule5', label: 'Challenge VPN & wp-login',             action: 'Challenge' },
+			{ key: 'rule1', label: 'Allow Good Bots',                                                      action: 'Skip' },
+			{ key: 'rule2', label: 'Block Aggressive Crawlers & WP Paths',                                  action: 'Block' },
+			{ key: 'rule3', label: rule3Label,                                                               action: rule3Action },
+			{ key: 'rule4', label: 'Challenge Large Providers / Country',                                    action: 'Challenge' },
+			{ key: 'rule5', label: 'Challenge VPN & wp-login',                                               action: 'Challenge' },
 		];
 		const enabled = rules.filter(function (r) { return getVal(settings, r.key + '.enabled'); });
 		el.innerHTML = enabled.length
