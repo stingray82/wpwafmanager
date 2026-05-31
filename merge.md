@@ -143,7 +143,7 @@ Still on:
 Run:
 
 ```bash
-git push feature/extensible-rule1-allowlist --force-with-lease
+git push origin feature/extensible-rule1-allowlist --force-with-lease
 ```
 
 ---
