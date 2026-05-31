@@ -157,56 +157,7 @@ Zone Analytics starts with no zones selected and auto-sync off. This prevents su
 
 == Changelog ==
 
-= 1.0.13 – May 2026 =
-* Changed: synced with wafrules.com May 28, 2026 ruleset update
-* Rule 1: added six new optional verified bot categories — Aggregator, AI Assistant, AI Crawler, AI Search, Archiver, Social Media Marketing (all off by default, opt-in)
-* Rule 2: added setup-config.php to WordPress install path blocking; added sensitive file exposure blocking (.env, .git, composer.json, composer.lock, debug.log, phpunit, server-status) — on by default
-* Rule 3: added five new exploit URI pattern groups — Union SQLi, LFI/path traversal (expanded), legacy CGI/scanner paths, foreign CMS probes, reflected XSS — all on by default, matching wafrules.com placement
-
-= 1.0.12 – May 2026 =
-* Security: decrypted Cloudflare API credentials were included in the window.cfWAF.accounts JavaScript object output on the WAF Rules admin page. Any script running on the admin page could read the token. The accounts array passed to the frontend now contains only safe display fields (id, label, auth_method, has_api_token, has_api_key) — credentials are never sent to the browser.
-
-= 1.0.11 – May 2026 =
-* Fixed: removed Minification (JS/CSS/HTML) from Zone Settings — Cloudflare deprecated and removed their Minify API in 2024. The setting was causing a "minify is not defined" error in Zone Settings for all users.
-
-= 1.0.10 – May 2026 =
-* Improved: when a deploy fails because the rule expression exceeds Cloudflare's 4096-character limit (error 20127), the error message now includes a plain-English explanation and suggests moving IPs to the IP Access Rules module to reduce expression size.
-
-= 1.0.9 – May 2026 =
-* Fixed: IPv6 addresses in the custom IP allowlist caused a Cloudflare "expected IP address character" error. IP addresses in ip.src expressions must not be quoted — the rule builder was wrapping every IP in double quotes. Fixed; IPv4, IPv6, and CIDR ranges all now generate the correct unquoted syntax.
-
-= 1.0.8 – May 2026 =
-* Security: email rule update handler now validates and sanitizes each field individually before passing to the Cloudflare API, rather than forwarding raw POST JSON
-* Security: update notifier internal constants made private
-* Performance: WPWAF_Settings::all() now caches in-request to avoid repeated get_option calls per page load
-* Performance: IP access rule pagination converted from recursion to iterative loop, eliminating stack risk on accounts with many rules
-* Performance: removed unused get_zone_settings() method that made 8 serial Cloudflare API calls (get_all_zone_settings() replaced it in a single call)
-* Code: removed unreachable duplicate error-check block in security events GraphQL handler
-
-= 1.0.7 – May 2026 =
-* Rule 1 (Allow Good Bots): added Custom User Agents allowlist — enter user agent strings one per line to skip all WAF rules, identical pattern to the existing custom IP allowlist. Survives base rule updates.
-* Added update notifier — free users see a dashboard notice when a new version is available on GitHub, with links to download free or upgrade to Pro for automatic updates. Pro users with an active license see nothing. Notice is dismissible and refreshes daily.
-
-= 1.0.6 – May 2026 =
-* Updated bundled wafrules.com ruleset to May 1, 2026
-* Rule 2 (Block Aggressive Crawlers): added time-delay/blind SQLi patterns (pg_sleep, sleep(, benchmark(, dbms_pipe, receive_message, waitfor delay variants) and encoded LFI/path traversal patterns (%2fetc%2fpasswd, %5c..%5c, %2e%2e%2f, etc.)
-* Rule 4 (Challenge VPN): expanded VPN provider list with individual ASN entries for IPVanish (AS46253), QuadraNet (AS8100, AS62639), OVH France (AS16276), Internet Utilities (AS206092/74/64/50/277), PrivateLayer (AS51852), and Mullvad (AS216025, AS39351)
-* Rule 5 (Block Web Hosts): added HostRoyale (AS207990) and Cloudvider (AS62240); expanded LeaseWeb to 6 ASNs (60781, 205544, 27411, 7203, 30633, 395954) and GoDaddy to 3 ASNs (398101, 31815, 26496)
-
-= 1.0.0 – April 2026 =
-* Initial public release
-* WAF Rules Builder — 5 battle-tested rules based on the wafrules.com ruleset (updated March 2026)
-* DNS Manager — 21 record types, add/edit/delete, proxy toggle, TTL, search/filter
-* Zone Analytics — Cloudflare GraphQL API, 6 stats per zone, WP-Cron auto-sync, zone picker
-* Zone Controls — Under Attack mode (per zone + all zones), Dev Mode, cache purge, per-zone settings
-* IP Access Rules — account-level, 4 target types, 4 actions, multi-account support
-* Security Events — GraphQL-powered, filter by action, time range 1h–7d (Pro plan zones)
-* Email Routing — destination address management, forwarding rules, catch-all rule, sync button
-* Plugin Settings — admin bar purge, access control role picker, menu visibility, uninstall toggle
-* WordPress Dashboard Widget — account/zone summary with quick links
-* Multi-account support with credential expiry and obfuscation
-* SureCart Pro licensing with auto-update support
-* Automatic Cloudflare Free plan compatibility for WAF rules
+Full changelog at https://www.wpwafmanager.com/changelog/
 
 == Upgrade Notice ==
 
