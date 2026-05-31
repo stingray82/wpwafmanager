@@ -396,13 +396,6 @@ class WPWAF_Rule_Builder {
 				}
 			}
 		}
-<<<<<<< HEAD
-
-
-
-
-=======
->>>>>>> feature/extensible-rule1-allowlist
 		return [
 			'description'       => '[CF WAF] Allow Good Bots',
 			'expression'        => ! empty( $parts ) ? implode( ' or ', $parts ) : '(1 eq 0)',
