@@ -427,7 +427,9 @@
 							<label class="cfwaf-check-label"><input type="checkbox" data-setting="rule2.block_wlwmanifest"> Block WLW Manifest</label>
 							<label class="cfwaf-check-label"><input type="checkbox" data-setting="rule2.block_readme"> Block readme.html</label>
 							<label class="cfwaf-check-label"><input type="checkbox" data-setting="rule2.block_license"> Block license.txt</label>
+							<label class="cfwaf-check-label"><input type="checkbox" data-setting="rule2.block_wpcron" id="cfwaf-block-wpcron"> Block wp-cron.php</label>
 						</div>
+						<p class="cfwaf-check-warning" id="cfwaf-wpcron-warning" style="display:none;">Only enable wp-cron.php blocking if you are not using a real server cron that hits wp-cron.php via HTTP. Enabling this on sites that do will break scheduled tasks.</p>
 					</div>
 
 					<div class="cfwaf-section">

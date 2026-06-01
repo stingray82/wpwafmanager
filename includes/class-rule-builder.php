@@ -95,6 +95,11 @@ class WPWAF_Rule_Builder {
 				'block_readme'         => true,
 				'block_license'        => true,
 				'block_sensitive_paths'=> true,
+				// NOTE: block_wpcron added v1.0.14 — intentionally false by default.
+				// DO NOT change this default to true in future rule syncs without a
+				// migration notice. Sites using a real server cron that hits wp-cron.php
+				// via HTTP will break if this is enabled without warning.
+				'block_wpcron'         => false,
 				'block_sqli_sleep'     => true,
 				'block_path_traversal' => true,
 			],
@@ -389,7 +394,7 @@ class WPWAF_Rule_Builder {
 		if ( ! empty( $s['block_masscan'] )) $parts[] = '(http.user_agent contains "masscan")';
 		if ( ! empty( $s['block_nmap'] ) )   $parts[] = '(http.user_agent contains "nmap")';
 
-		if ( ! empty( $s['block_xmlrpc'] ) )      $parts[] = '(lower(http.request.uri.path) contains "xmlrpc")';;
+		if ( ! empty( $s['block_xmlrpc'] ) )      $parts[] = '(lower(http.request.uri.path) contains "xmlrpc")';
 		if ( ! empty( $s['block_wpconfig'] ) )    $parts[] = '(lower(http.request.uri.path) contains "wp-config")';
 		if ( ! empty( $s['block_wpjson'] ) )      $parts[] = '(lower(http.request.uri.path) contains "wp-json")';
 		if ( ! empty( $s['block_wpinstall'] ) ) {
@@ -398,11 +403,13 @@ class WPWAF_Rule_Builder {
 		}
 		if ( ! empty( $s['block_wlwmanifest'] ) ) $parts[] = '(lower(http.request.uri.path) contains "wlwmanifest")';
 		if ( ! empty( $s['block_readme'] ) )      $parts[] = '(lower(http.request.uri.path) contains "readme.html")';
-		if ( ! empty( $s['block_license'] ) )     $parts[] = '(lower(http.request.uri.path) contains "license.txt")';;
+		if ( ! empty( $s['block_license'] ) )     $parts[] = '(lower(http.request.uri.path) contains "license.txt")';
+
+		if ( ! empty( $s['block_wpcron'] ) )      $parts[] = '(lower(http.request.uri.path) contains "wp-cron.php")';
 
 		if ( ! empty( $s['block_sensitive_paths'] ) ) {
 			foreach ( [ '/.env', '/.git', 'composer.json', 'composer.lock', 'debug.log', 'phpunit', 'server-status' ] as $t ) {
-				$parts[] = "(lower(http.request.uri.path) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri.path) contains \"{$t}\")";
 			}
 		}
 
@@ -464,27 +471,27 @@ class WPWAF_Rule_Builder {
 		// Exploit URI patterns (wafrules.com bundles these with Web Hosts/TOR — May 2026 sync)
 		if ( ! empty( $s['block_union_sqli'] ) ) {
 			foreach ( [ 'union%2f%2a%2a%2fselect', 'union%20select', 'information_schema', 'concat(', 'load_file(', 'into%20outfile' ] as $t ) {
-				$parts[] = "(lower(http.request.uri.query) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri.query) contains \"{$t}\")";
 			}
 		}
 		if ( ! empty( $s['block_lfi_traversal'] ) ) {
 			foreach ( [ '../', '..%5c', '%2e%2e', 'etc/passwd', '%2fetc%2fpasswd', '%252fetc', '%00', '%5c..%5c' ] as $t ) {
-				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";
 			}
 		}
 		if ( ! empty( $s['block_legacy_paths'] ) ) {
 			foreach ( [ 'smb2www.pl', 'smbshr.pl', 'story.pl', 'browserweb/portal/portalbanner.htm', 'about/frmabout.aspx', 'symantec.jsp', 'webman/info.cgi', 'smpwservicescgi.exe', 'printenv' ] as $t ) {
-				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";
 			}
 		}
 		if ( ! empty( $s['block_foreign_cms'] ) ) {
 			foreach ( [ '/symphony/', '/spip/', '/taskfreak/', '/temenos/', '/tembria/', '/sympa/', '/lists/remindpasswd', '/wws/remindpasswd', 'index.php?mode=administration', 'index.php?user/login', 'action=login&module=users' ] as $t ) {
-				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";
 			}
 		}
 		if ( ! empty( $s['block_reflected_xss'] ) ) {
 			foreach ( [ '<script', '%3cscript', 'javascript:', 'onerror=', 'onload=' ] as $t ) {
-				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";;
+				$parts[] = "(lower(http.request.uri) contains \"{$t}\")";
 			}
 		}
 
