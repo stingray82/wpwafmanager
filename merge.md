@@ -1,230 +1,187 @@
 # WP WAF Manager Fork Maintenance Workflow
 
-Original upstream repo:
+# WP WAF Manager Fork Update Workflow
 
-```text
-https://github.com/jaimealnassim/wpwafmanager
-```
-
-fork/release repo:
-
-```text
-https://github.com/stingray82/wpwafmanager
-```
-
----
-
-## Branch Structure
+## Branch Rules
 
 ```text
 main
-  Clean upstream mirror only.
-  Do not make custom fork edits here.
+= clean mirror of upstream only
 
 feature/extensible-rule1-allowlist
-  Original untouched PR branch.
-  Leave this alone unless the upstream PR needs updating.
-
-patch/wpwaf-custom-filters
-  Working patch branch containing your maintained fork changes.
+= small feature patch only
 
 release/wpwaf-manager-fork
-  Deployment branch used by live sites and deploy.sh.
+= production fork branch with updater, deploy files, UUPD, version bumps
 ```
 
----
+Never reset the release branch to the feature branch.
 
-# One-Time Setup
-
-## Branch you can be on
-
-You can run this from any branch.
-
-## Add upstream remote
+Do not use:
 
 ```bash
-git remote add upstream https://github.com/jaimealnassim/wpwafmanager.git
-git fetch upstream
+git reset --hard feature/extensible-rule1-allowlist
 ```
 
-Check remotes:
+on the release branch.
+
+------
+
+# 1. Sync `main` With Upstream
+
+You should be on any branch to start, but this step switches to `main`.
 
 ```bash
-git remote -v
-```
-
-Expected idea:
-
-```text
-origin    https://github.com/stingray82/wpwafmanager.git
-upstream  https://github.com/jaimealnassim/wpwafmanager.git
-```
-
----
-
-# 1. Sync `main` With Original Plugin
-
-## Branch you should be on
-
-```text
-main
-```
-
-## Commands
-
-```bash
-git checkout main
+git switch main
 git fetch upstream
 git reset --hard upstream/main
 git push origin main --force-with-lease
 ```
 
-## What this does
+------
 
-This makes your `main` branch match the original plugin.
+# 2. Rebase the Feature Patch
 
-Do not put custom filters, updater code, or deployment changes directly on `main`.
-
----
-
-# 2. Rebase the Patch Branch Onto Latest Upstream
-
-## Branch you should be on
-
-Start by switching to:
-
-```text
- feature/extensible-rule1-allowlist
-```
-
-## Commands
+Switch to the feature branch:
 
 ```bash
-git checkout  feature/extensible-rule1-allowlist
-git fetch upstream
+git switch feature/extensible-rule1-allowlist
+```
+
+Rebase it onto the latest upstream:
+
+```bash
 git rebase upstream/main
 ```
 
-## If there are conflicts
-
-Stay on:
-
-```text
- feature/extensible-rule1-allowlist
-```
-
-Then check what needs resolving:
+If conflicts happen, fix them, then:
 
 ```bash
-git status
+git add path/to/conflicted-file.php
+GIT_EDITOR=true git rebase --continue
 ```
 
-After fixing the files:
-
-```bash
-git add .
-git rebase --continue
-```
-
-If the rebase goes badly and you want to cancel it:
-
-```bash
-git rebase --abort
-```
-
-## Push the updated patch branch
-
-Still on:
-
-```text
- feature/extensible-rule1-allowlist
-```
-
-Run:
+When complete, push the rewritten feature branch:
 
 ```bash
 git push origin feature/extensible-rule1-allowlist --force-with-lease
 ```
 
----
+Do not use `git pull` here.
 
-# 3. Update the Release Branch From the Patch Branch
+------
 
-## Branch you should be on
+# 3. Merge Feature Into Release Branch
 
-Switch to:
-
-```text
-release/wpwaf-manager-fork
-```
-
-## Commands
+Switch to the release branch:
 
 ```bash
-git checkout release/wpwaf-manager-fork
-git reset --hard patch/wpwaf-custom-filters
-git push origin release/wpwaf-manager-fork --force-with-lease
+git switch release/wpwaf-manager-fork
 ```
 
-## What this does
+Merge the feature branch:
 
-This makes the release branch identical to your tested patch branch.
-
-Live updater metadata should come from this branch.
-
-Fix files
-
-```
-git add wpwafmanager.php
-GIT_EDITOR=true git rebase --continue
+```bash
+git merge feature/extensible-rule1-allowlist
 ```
 
-Then 
+If conflicts happen, fix them manually.
 
+Important files to preserve on the release branch:
+
+```text
+deploy.sh
+deploy.cfg
+merge.md
+uupd/
+includes/updater.php
+includes/stingray82.php
 ```
+
+In `wpwafmanager.php`, make sure these remain present:
+
+```php
+define( 'WPWAF_FILE', __FILE__ );
+require_once __DIR__ . '/includes/stingray82.php';
+```
+
+Also make sure the plugin header version and `WPWAF_VERSION` match the intended fork release version.
+
+After resolving conflicts:
+
+```bash
+git add wpwafmanager.php includes/class-rule-builder.php includes/stingray82.php
+```
+
+Or, if you are sure all changes are correct:
+
+```bash
+git add .
+```
+
+Commit the merge:
+
+```bash
+git commit -m "Merge feature patch into release branch"
+```
+
+Do not run `git merge` again while Git says `MERGING`.
+
+------
+
+# 4. Safety Checks Before Deploy
+
+Check status:
+
+```bash
 git status
-git push origin release/wpwaf-manager-fork --force-with-lease
-sh deploy.sh
 ```
 
-
-
----
-
-# 4. Deploy From the Release Branch
-
-## Branch you must be on
-
-```text
-release/wpwaf-manager-fork
-```
-
-Check with:
+Search for unresolved conflict markers:
 
 ```bash
-git branch --show-current
+grep -R "<<<<<<<\|=======\|>>>>>>>" .
 ```
 
-It should return:
+Review the merge commit:
 
-```text
-release/wpwaf-manager-fork
+```bash
+git show --stat --oneline HEAD
+git show --name-status HEAD
 ```
 
----
+If anything looks wrong, stop and inspect before deploying.
 
-## Dry run deployment
+------
 
-Make sure `deploy.cfg` has:
+# 5. Push Release Branch
+
+```bash
+git push origin release/wpwaf-manager-fork
+```
+
+If Git rejects because history was rewritten, only then use:
+
+```bash
+git push origin release/wpwaf-manager-fork --force-with-lease
+```
+
+------
+
+# 6. Deploy
+
+Make sure `deploy.cfg` is set correctly.
+
+For test build:
 
 ```ini
 DRY_RUN=1
 ```
 
-Then, while on:
+For live release:
 
-```text
-release/wpwaf-manager-fork
+```ini
+DRY_RUN=0
 ```
 
 Run:
@@ -233,285 +190,95 @@ Run:
 sh deploy.sh
 ```
 
-This should:
+------
 
-- build the plugin zip
-- generate `uupd/index.json`
-- check the zip contents
-- avoid committing
-- avoid pushing
-- avoid creating a GitHub release
+# Common Mistakes
 
----
+## Wrong push command
 
-## Live deployment
-
-Make sure you are still on:
-
-```text
-release/wpwaf-manager-fork
-```
-
-Set `deploy.cfg` to:
-
-```ini
-DRY_RUN=0
-```
-
-Then run:
+Wrong:
 
 ```bash
-sh deploy.sh
+git push feature/extensible-rule1-allowlist --force-with-lease
 ```
 
-This should:
-
-- build the plugin zip
-- generate `uupd/index.json`
-- commit generated files
-- push the release branch
-- create or update the GitHub Release
-- upload the release zip
-
----
-
-# UUPD Architecture
-
-## Files included in the plugin zip
-
-```text
-includes/updater.php
-includes/stingray82.php
-```
-
-## Files excluded from the plugin zip
-
-```text
-uupd/
-deploy.sh
-deploy.cfg
-cl.txt
-static.txt
-```
-
----
-
-# Updater Endpoint
-
-The updater JSON should be served from the release branch:
-
-```text
-https://raw.githubusercontent.com/stingray82/wpwafmanager/release/wpwaf-manager-fork/uupd/index.json
-```
-
-The plugin zip should be served from the latest GitHub Release asset:
-
-```text
-https://github.com/stingray82/wpwafmanager/releases/latest/download/wp-waf-manager.zip
-```
-
-This is correct even though GitHub shows releases at repo level.
-
-The release should be created while targeting:
-
-```text
-release/wpwaf-manager-fork
-```
-
----
-
-# Versioning Strategy
-
-Use the upstream version plus your fork patch number.
-
-Examples:
-
-```text
-Upstream: 1.0.6
-Fork:     1.0.6.1
-
-Upstream: 1.0.7
-Fork:     1.0.7.1
-
-Upstream: 1.0.7
-Second fork patch: 1.0.7.2
-```
-
-Update both:
-
-```text
-Plugin header Version
-WPWAF_VERSION constant
-```
-
----
-
-# Recommended Git Config
-
-You can run this from any branch.
+Correct:
 
 ```bash
-git config --global rerere.enabled true
+git push origin feature/extensible-rule1-allowlist --force-with-lease
 ```
 
-This helps Git remember repeated conflict resolutions during future rebases.
+## Do not pull after a rebase
 
----
-
-# Full Update Checklist
-
-## Step 1: Sync main
-
-Branch:
-
-```text
-main
-```
-
-Commands:
+Wrong:
 
 ```bash
-git checkout main
+git pull
+```
+
+Correct:
+
+```bash
+git push origin feature/extensible-rule1-allowlist --force-with-lease
+```
+
+## Do not reset release to feature
+
+Wrong:
+
+```bash
+git reset --hard feature/extensible-rule1-allowlist
+```
+
+Correct:
+
+```bash
+git merge feature/extensible-rule1-allowlist
+```
+
+## If Git editor breaks
+
+Use:
+
+```bash
+GIT_EDITOR=true git rebase --continue
+```
+
+or commit with a message:
+
+```bash
+git commit -m "Merge feature patch into release branch"
+```
+
+Optional permanent fix:
+
+```bash
+git config --global core.editor true
+```
+
+------
+
+# Short Version
+
+```bash
+git switch main
 git fetch upstream
 git reset --hard upstream/main
 git push origin main --force-with-lease
-```
 
----
-
-## Step 2: Rebase patch branch
-
-Branch:
-
-```text
-patch/wpwaf-custom-filters
-```
-
-Commands:
-
-```bash
-git checkout patch/wpwaf-custom-filters
+git switch feature/extensible-rule1-allowlist
 git rebase upstream/main
-git push origin patch/wpwaf-custom-filters --force-with-lease
-```
+git push origin feature/extensible-rule1-allowlist --force-with-lease
 
----
+git switch release/wpwaf-manager-fork
+git merge feature/extensible-rule1-allowlist
 
-## Step 3: Update release branch
+# fix conflicts if needed
+git add .
+git commit -m "Merge feature patch into release branch"
 
-Branch:
+grep -R "<<<<<<<\|=======\|>>>>>>>" .
+git push origin release/wpwaf-manager-fork
 
-```text
-release/wpwaf-manager-fork
-```
-
-Commands:
-
-```bash
-git checkout release/wpwaf-manager-fork
-git reset --hard patch/wpwaf-custom-filters
-git push origin release/wpwaf-manager-fork --force-with-lease
-```
-
----
-
-## Step 4: Dry run deploy
-
-Branch:
-
-```text
-release/wpwaf-manager-fork
-```
-
-Config:
-
-```ini
-DRY_RUN=1
-```
-
-Command:
-
-```bash
 sh deploy.sh
 ```
-
----
-
-## Step 5: Live deploy
-
-Branch:
-
-```text
-release/wpwaf-manager-fork
-```
-
-Config:
-
-```ini
-DRY_RUN=0
-```
-
-Command:
-
-```bash
-sh deploy.sh
-```
-
----
-
-# Daily Rules
-
-## Only sync upstream on:
-
-```text
-main
-```
-
-## Only edit fork patches on:
-
-```text
-patch/wpwaf-custom-filters
-```
-
-## Only deploy from:
-
-```text
-release/wpwaf-manager-fork
-```
-
-## Keep untouched unless updating the PR:
-
-```text
-feature/extensible-rule1-allowlist
-```
-
-
-
-
-
-Example FIlter
-
-```
-add_filter( 'wpwaf_rule1_extra_allow_expressions', function( array $expressions ): array {
-	$expressions[] = 'http.request.headers["x-trustwards-scanner"][0] eq "true"';
-
-	return $expressions;
-} );
-```
-
-
-
-
-
-```
-git fetch upstream
-git checkout feature/extensible-rule1-allowlist
-git rebase upstream/main
-# fix only if needed
-
-git checkout release/wpwaf-manager-fork
-git rebase feature/extensible-rule1-allowlist
-git push origin release/wpwaf-manager-fork --force-with-lease
-sh deploy.sh
-```
-
