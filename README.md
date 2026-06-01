@@ -254,26 +254,3 @@ wpwafmanager/
 ## Changelog
 
 Full changelog at [wpwafmanager.com/changelog](https://www.wpwafmanager.com/changelog/).
-
----
-
-## Contributing
-
-Pull requests are welcome. Please open an issue first for major changes.
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'Add my feature'`
-4. Push and open a Pull Request
-
----
-
-## Credits
-
-WAF rules based on the five-rule pattern by [Troy Glancy (WebAgencyHero)](https://webagencyhero.com), refined and maintained by [Michael Bourne (URSA6)](https://wafrules.com). Plugin development by [Nahnu Plugins](https://nahnuplugins.com).
-
----
-
-## License
-
-[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html)

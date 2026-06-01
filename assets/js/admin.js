@@ -211,6 +211,10 @@
 			if (key === 'rule4.challenge_country') updateCountryPanel();
 			if (key === 'rule3.action')            updateRule3Badge();
 			if (key === 'rule5.challenge_all_vpn') updateVpnState();
+			if (key === 'rule2.block_wpcron') {
+				const warn = qs('#cfwaf-wpcron-warning');
+				if (warn) warn.style.display = el.checked ? '' : 'none';
+			}
 		} else if (el.matches('.cfwaf-cat-check')) {
 			syncFromUI();
 		} else if (el.matches('.cfwaf-zone-check')) {
@@ -880,6 +884,11 @@
 	updateCountryPanel();
 	initCountryPicker();
 
+	// Show wpcron warning on load if already enabled in saved settings
+	const wpcronWarn = qs('#cfwaf-wpcron-warning');
+	const wpcronChk  = qs('#cfwaf-block-wpcron');
+	if (wpcronWarn && wpcronChk && wpcronChk.checked) wpcronWarn.style.display = '';
+
 })();
 
 // Injected after boot — Export / Import settings as JSON
@@ -914,7 +923,7 @@
 			block_spider: 'boolean', block_nikto: 'boolean', block_sqlmap: 'boolean',
 			block_masscan: 'boolean', block_nmap: 'boolean', block_xmlrpc: 'boolean',
 			block_wpconfig: 'boolean', block_wpjson: 'boolean', block_wpinstall: 'boolean',
-			block_wlwmanifest: 'boolean', block_readme: 'boolean', block_license: 'boolean',
+			block_wlwmanifest: 'boolean', block_readme: 'boolean', block_license: 'boolean', block_wpcron: 'boolean',
 			block_sqli_sleep: 'boolean', block_path_traversal: 'boolean',
 		},
 		rule3: {
