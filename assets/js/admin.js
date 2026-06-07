@@ -367,7 +367,15 @@
 					populateInspectDropdown();
 					renderZones(zones);
 				} else if (loadingEl) {
-					loadingEl.textContent = 'Failed: ' + ((res.data && res.data.message) || 'Error');
+					const msg         = (res.data && res.data.message) || 'Unknown error';
+					const isAuthError = msg.indexOf('9103') !== -1 || msg.indexOf('10000') !== -1 || /auth|invalid.*token|unknown.*key/i.test(msg);
+					loadingEl.innerHTML =
+						'<div class="cfwaf-zone-load-error">' +
+						'<strong>\u2717 Could not load zones.</strong><br>' +
+						( isAuthError
+							? 'Cloudflare rejected your credentials (<code>' + msg + '</code>). Your API token or API key &amp; email appear to be invalid or expired. Check the <strong>Accounts</strong> section at the top of this page and re-enter your credentials.'
+							: 'Cloudflare returned an error: <code>' + msg + '</code>. Verify your credentials in the <strong>Accounts</strong> section above.' ) +
+						'</div>';
 				}
 			});
 		}
@@ -439,6 +447,96 @@
 		});
 	});
 
+	// ── Domain profiles ───────────────────────────────────────────────────────
+
+	let activeDomainProfileId = WAF.active_domain_profile_id || 'default';
+
+	function renderDomainProfileSelect() {
+		const sel = qs('#cfwaf-domain-profile-select');
+		if (!sel) return;
+		sel.innerHTML = (WAF.domain_profiles || []).map(function (p) {
+			return '<option value="' + p.id + '"' + (p.id === activeDomainProfileId ? ' selected' : '') + '>' + p.name + '</option>';
+		}).join('');
+		updateDomainDeleteBtn();
+	}
+
+	function updateDomainDeleteBtn() {
+		const btn = qs('#cfwaf-domain-profile-delete');
+		if (btn) btn.disabled = activeDomainProfileId === 'default';
+	}
+
+	function applyDomainProfile(zoneIds) {
+		const idSet = new Set(zoneIds);
+		qsa('.cfwaf-zone-check').forEach(function (cb) {
+			const checked = idSet.has(cb.value);
+			cb.checked = checked;
+			const item = cb.closest('.cfwaf-zone-item');
+			if (item) item.classList.toggle('selected', checked);
+		});
+		updateDeployBtn();
+	}
+
+	on(qs('#cfwaf-domain-profile-select'), 'change', function () {
+		const id = this.value;
+		activeDomainProfileId = id;
+		const profile = (WAF.domain_profiles || []).find(function (p) { return p.id === id; });
+		if (profile) applyDomainProfile(profile.zone_ids || []);
+		updateDomainDeleteBtn();
+		ajax('wpwaf_domain_profile_switch', { profile_id: id }, function () {});
+	});
+
+	on(qs('#cfwaf-domain-profile-save-current'), 'click', function () {
+		const ids = qsa('.cfwaf-zone-check:checked').map(function (cb) { return cb.value; });
+		const btn = qs('#cfwaf-domain-profile-save-current');
+		if (btn) { btn.textContent = 'Saving\u2026'; btn.disabled = true; }
+		ajax('wpwaf_domain_profile_save', { profile_id: activeDomainProfileId, zone_ids: JSON.stringify(ids) }, function (res) {
+			if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+			res.success ? toast('\u2713 Domain profile saved') : toast('\u2717 ' + ((res.data && res.data.message) || 'Could not save'), 'error');
+		});
+	});
+
+	on(qs('#cfwaf-domain-profile-new'), 'click', function () {
+		if ((WAF.domain_profiles || []).length >= 10) {
+			toast('\u2717 Maximum of 10 domain profiles reached', 'error'); return;
+		}
+		const name = prompt('Domain profile name:');
+		if (!name || !name.trim()) return;
+		const ids = qsa('.cfwaf-zone-check:checked').map(function (cb) { return cb.value; });
+		ajax('wpwaf_domain_profile_create', { name: name.trim(), zone_ids: JSON.stringify(ids) }, function (res) {
+			if (!res.success) { toast('\u2717 ' + ((res.data && res.data.message) || 'Could not save profile'), 'error'); return; }
+			WAF.domain_profiles   = res.data.domain_profiles;
+			activeDomainProfileId = res.data.profile_id;
+			renderDomainProfileSelect();
+			toast('\u2713 Domain profile \u201c' + name.trim() + '\u201d created');
+		});
+	});
+
+	on(qs('#cfwaf-domain-profile-delete'), 'click', function () {
+		if (activeDomainProfileId === 'default') return;
+		const profile = (WAF.domain_profiles || []).find(function (p) { return p.id === activeDomainProfileId; });
+		const name    = profile ? profile.name : activeDomainProfileId;
+		if (!confirm('Delete domain profile \u201c' + name + '\u201d? This cannot be undone.')) return;
+		ajax('wpwaf_domain_profile_delete', { profile_id: activeDomainProfileId }, function (res) {
+			if (!res.success) { toast('\u2717 ' + (res.data.message || 'Could not delete'), 'error'); return; }
+			WAF.domain_profiles   = res.data.domain_profiles;
+			activeDomainProfileId = res.data.active_domain_profile_id;
+			renderDomainProfileSelect();
+			// Clear zone selection when falling back to Default (empty)
+			if (activeDomainProfileId === 'default') applyDomainProfile([]);
+			toast('\u2713 Domain profile deleted');
+		});
+	});
+
+	// Populate domain profile select once zones are loaded
+	const _origRenderZones = renderZones;
+	renderZones = function (list) {
+		_origRenderZones(list);
+		renderDomainProfileSelect();
+		// Apply active domain profile's zone selection on load
+		const active = (WAF.domain_profiles || []).find(function (p) { return p.id === activeDomainProfileId; });
+		if (active && active.zone_ids && active.zone_ids.length) applyDomainProfile(active.zone_ids);
+	};
+
 	function updateDeployBtn() {
 		const n   = qsa('.cfwaf-zone-check:checked').length;
 		const btn = qs('#cfwaf-confirm-deploy');
@@ -479,14 +577,91 @@
 	});
 
 	// ── Save / Reset settings ──────────────────────────────────────────────────
+	// ── Profile management ────────────────────────────────────────────────────
+
+	let activeProfileId = WAF.active_profile_id || 'default';
+
+	function renderProfileSelect() {
+		const sel = qs('#cfwaf-profile-select');
+		if (!sel) return;
+		sel.innerHTML = (WAF.profiles || []).map(function (p) {
+			return '<option value="' + p.id + '"' + (p.id === activeProfileId ? ' selected' : '') + '>' + p.name + '</option>';
+		}).join('');
+		updateProfileDeleteBtn();
+		updateSaveLabel();
+	}
+
+	function updateProfileDeleteBtn() {
+		const btn = qs('#cfwaf-profile-delete');
+		if (btn) btn.disabled = activeProfileId === 'default';
+	}
+
+	function updateSaveLabel() {
+		const btn = qs('#cfwaf-save-settings');
+		if (!btn) return;
+		const profiles = WAF.profiles || [];
+		const active   = profiles.find(function (p) { return p.id === activeProfileId; });
+		const name     = active ? active.name : 'Default';
+		btn.innerHTML  = '<span class="dashicons dashicons-saved"></span> Save \u2014 ' + name;
+	}
+
+	on(qs('#cfwaf-profile-select'), 'change', function () {
+		const id = this.value;
+		if (id === activeProfileId) return;
+		ajax('wpwaf_profile_switch', { profile_id: id }, function (res) {
+			if (!res.success) { toast('\u2717 Could not load profile', 'error'); return; }
+			activeProfileId  = res.data.profile_id;
+			settings         = res.data.settings;
+			syncToUI();
+			updateProfileDeleteBtn();
+			updateSaveLabel();
+			toast('\u2713 Profile loaded');
+		});
+	});
+
+	on(qs('#cfwaf-profile-new'), 'click', function () {
+		if ((WAF.profiles || []).length >= 10) {
+			toast('\u2717 Maximum of 10 profiles reached', 'error'); return;
+		}
+		const name = prompt('Profile name:');
+		if (!name || !name.trim()) return;
+		syncFromUI();
+		ajax('wpwaf_profile_create', { name: name.trim(), settings: JSON.stringify(settings) }, function (res) {
+			if (!res.success) { toast('\u2717 ' + (res.data.message || 'Could not create profile'), 'error'); return; }
+			WAF.profiles    = res.data.profiles;
+			activeProfileId = res.data.profile_id;
+			renderProfileSelect();
+			toast('\u2713 Profile \u201c' + name.trim() + '\u201d created');
+		});
+	});
+
+	on(qs('#cfwaf-profile-delete'), 'click', function () {
+		if (activeProfileId === 'default') return;
+		const profiles = WAF.profiles || [];
+		const active   = profiles.find(function (p) { return p.id === activeProfileId; });
+		const name     = active ? active.name : activeProfileId;
+		if (!confirm('Delete profile \u201c' + name + '\u201d? This cannot be undone.')) return;
+		ajax('wpwaf_profile_delete', { profile_id: activeProfileId }, function (res) {
+			if (!res.success) { toast('\u2717 ' + (res.data.message || 'Could not delete profile'), 'error'); return; }
+			WAF.profiles    = res.data.profiles;
+			activeProfileId = res.data.active_profile_id;
+			renderProfileSelect();
+			toast('\u2713 Profile deleted');
+		});
+	});
+
+	renderProfileSelect();
+
+	// ── Save settings ─────────────────────────────────────────────────────────
+
 	on(qs('#cfwaf-save-settings'), 'click', function () {
 		syncFromUI();
 		const btn = qs('#cfwaf-save-settings');
 		btn.innerHTML = '<span class="dashicons dashicons-update"></span> Saving\u2026';
 		btn.disabled  = true;
-		ajax('wpwaf_save_settings', { settings: JSON.stringify(settings) }, function (res) {
-			btn.innerHTML = '<span class="dashicons dashicons-saved"></span> Save Settings';
+		ajax('wpwaf_save_settings', { settings: JSON.stringify(settings), active_profile: activeProfileId }, function (res) {
 			btn.disabled  = false;
+			updateSaveLabel();
 			res.success ? toast('\u2713 Settings saved!') : toast('\u2717 Save failed', 'error');
 		});
 	});
@@ -888,6 +1063,8 @@
 	const wpcronWarn = qs('#cfwaf-wpcron-warning');
 	const wpcronChk  = qs('#cfwaf-block-wpcron');
 	if (wpcronWarn && wpcronChk && wpcronChk.checked) wpcronWarn.style.display = '';
+
+	updateSaveLabel();
 
 })();
 

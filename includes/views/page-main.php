@@ -204,6 +204,16 @@
 		<!-- TAB: Configure Rules -->
 		<div class="cfwaf-tab-content active" id="cfwaf-tab-rules">
 
+			<!-- Profile bar -->
+			<div class="cfwaf-profile-bar">
+				<div class="cfwaf-profile-bar__left">
+					<label class="cfwaf-profile-bar__label" for="cfwaf-profile-select">Profile</label>
+					<select id="cfwaf-profile-select" class="cfwaf-profile-bar__select"></select>
+					<button type="button" class="cfwaf-btn cfwaf-btn-sm" id="cfwaf-profile-new" title="Save current settings as a new profile">+ New Profile</button>
+					<button type="button" class="cfwaf-btn cfwaf-btn-sm cfwaf-btn-danger" id="cfwaf-profile-delete" title="Delete selected profile">Delete</button>
+				</div>
+			</div>
+
 			<!-- RULE 1 -->
 			<div class="cfwaf-rule-card">
 				<div class="cfwaf-rule-header">
@@ -848,6 +858,16 @@
 				</div>
 
 				<div id="cfwaf-deploy-ready" style="display:none">
+					<!-- Domain profile bar -->
+					<div class="cfwaf-profile-bar cfwaf-profile-bar--domains">
+						<div class="cfwaf-profile-bar__left">
+							<label class="cfwaf-profile-bar__label" for="cfwaf-domain-profile-select">Domain Profile</label>
+							<select id="cfwaf-domain-profile-select" class="cfwaf-profile-bar__select"></select>
+							<button type="button" class="cfwaf-btn cfwaf-btn-sm" id="cfwaf-domain-profile-save-current" title="Save current zone selection to this profile">Save</button>
+							<button type="button" class="cfwaf-btn cfwaf-btn-sm" id="cfwaf-domain-profile-new" title="Save current zone selection as a new profile">+ New Profile</button>
+							<button type="button" class="cfwaf-btn cfwaf-btn-sm cfwaf-btn-danger" id="cfwaf-domain-profile-delete" title="Delete selected domain profile">Delete</button>
+						</div>
+					</div>
 					<div class="cfwaf-deploy-toolbar">
 						<label class="cfwaf-check-label cfwaf-select-all-label">
 							<input type="checkbox" id="cfwaf-select-all-zones"> <strong>Select All Zones</strong>
@@ -866,7 +886,10 @@
 				</div>
 
 				<div id="cfwaf-deploy-no-creds" style="display:none">
-					<p class="cfwaf-notice cfwaf-notice-error">Please verify your Cloudflare credentials above before deploying.</p>
+					<div class="cfwaf-zone-load-error">
+						<strong>No Cloudflare account connected.</strong><br>
+						Add a Cloudflare account in the <strong>Accounts</strong> section at the top of this page before deploying. You'll need either an API Token (recommended) or your Global API Key and account email.
+					</div>
 				</div>
 			</div>
 
@@ -1169,13 +1192,13 @@ window.cfWAF = <?php
 			: ! empty( $active['api_token'] );
 	}
 	echo wp_json_encode( [
-		'ajax_url'   => admin_url( 'admin-ajax.php' ),
-		'nonce'      => wp_create_nonce( 'wpwaf_nonce' ),
-		'settings'   => $saved_settings,
-		'defaults'   => WPWAF_Rule_Builder::default_settings(),
-		'has_creds'  => $has_creds,
-		'expires_at' => (int) ( $active['expires_at'] ?? 0 ),
-		'accounts'   => array_map( function( $acc ) {
+		'ajax_url'          => admin_url( 'admin-ajax.php' ),
+		'nonce'             => wp_create_nonce( 'wpwaf_nonce' ),
+		'settings'          => $saved_settings,
+		'defaults'          => WPWAF_Rule_Builder::default_settings(),
+		'has_creds'         => $has_creds,
+		'expires_at'        => (int) ( $active['expires_at'] ?? 0 ),
+		'accounts'          => array_map( function( $acc ) {
 			return [
 				'id'            => $acc['id']          ?? '',
 				'label'         => $acc['label']        ?? '',
@@ -1186,7 +1209,11 @@ window.cfWAF = <?php
 				'readonly'      => (bool) ( $acc['readonly']  ?? false ),
 			];
 		}, WPWAF_Accounts::all() ),
-		'active_id'  => WPWAF_Accounts::active_id(),
+		'active_id'         => WPWAF_Accounts::active_id(),
+		'profiles'                 => WPWAF_Profiles::for_js(),
+		'active_profile_id'        => WPWAF_Profiles::active_id(),
+		'domain_profiles'          => WPWAF_Domain_Profiles::for_js(),
+		'active_domain_profile_id' => WPWAF_Domain_Profiles::active_id(),
 	] );
 ?>;
 <?php echo file_get_contents( WPWAF_DIR . 'assets/js/admin.js' ); ?>
