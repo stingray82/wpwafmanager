@@ -376,3 +376,17 @@
 .cfwaf-ip-textarea:focus { outline: none; border-color: #FF6A00; box-shadow: 0 0 0 2px rgba(255,106,0,.12); }
 .cfwaf-hint-muted { color: #9ca3af; font-size: 11px; margin-top: 4px; }
 .cfwaf-ip-textarea::placeholder { color: #9ca3af; }
+
+/* ── Profile bar ─────────────────────────────────────────────────────────── */
+.cfwaf-profile-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.cfwaf-profile-bar__left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cfwaf-profile-bar__label { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.cfwaf-profile-bar__select { height: 32px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-weight: 600; color: #111; background: #fff; cursor: pointer; min-width: 160px; }
+.cfwaf-profile-bar__select:focus { outline: none; border-color: #FF6A00; box-shadow: 0 0 0 2px rgba(255,106,0,.12); }
+.cfwaf-btn-sm { height: 32px; padding: 0 12px; font-size: 12px; font-weight: 600; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; transition: background .15s, border-color .15s; }
+.cfwaf-btn-sm:hover { background: #f3f4f6; border-color: #9ca3af; }
+.cfwaf-btn-danger { border-color: #fca5a5; color: #dc2626; }
+.cfwaf-btn-danger:hover { background: #fef2f2; border-color: #f87171; }
+.cfwaf-btn-danger:disabled { opacity: .4; cursor: not-allowed; }
+.cfwaf-zone-load-error { padding: 14px 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; color: #7f1d1d; font-size: 13px; line-height: 1.6; }
+.cfwaf-zone-load-error code { background: #fee2e2; border-radius: 3px; padding: 1px 5px; font-size: 12px; }

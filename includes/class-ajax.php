@@ -24,6 +24,15 @@ class WPWAF_Ajax {
 		add_action( 'wp_ajax_wpwaf_list_zone_rules',      [ $self, 'list_zone_rules' ] );
 		add_action( 'wp_ajax_wpwaf_save_settings',        [ $self, 'save_settings' ] );
 		add_action( 'wp_ajax_wpwaf_preview_rules',        [ $self, 'preview_rules' ] );
+		// Profile management
+		add_action( 'wp_ajax_wpwaf_profile_switch',              [ $self, 'profile_switch' ] );
+		add_action( 'wp_ajax_wpwaf_profile_create',              [ $self, 'profile_create' ] );
+		add_action( 'wp_ajax_wpwaf_profile_delete',              [ $self, 'profile_delete' ] );
+		// Domain profile management
+		add_action( 'wp_ajax_wpwaf_domain_profile_switch',       [ $self, 'domain_profile_switch' ] );
+		add_action( 'wp_ajax_wpwaf_domain_profile_save',         [ $self, 'domain_profile_save' ] );
+		add_action( 'wp_ajax_wpwaf_domain_profile_create',       [ $self, 'domain_profile_create' ] );
+		add_action( 'wp_ajax_wpwaf_domain_profile_delete',       [ $self, 'domain_profile_delete' ] );
 
 		// DNS
 		add_action( 'wp_ajax_wpwaf_dns_list',             [ $self, 'dns_list' ] );
@@ -281,7 +290,143 @@ class WPWAF_Ajax {
 		// Sanitize before persisting — never store arbitrary JSON from POST.
 		$settings = WPWAF_Rule_Builder::sanitize_settings( $settings );
 		update_option( 'wpwaf_rule_settings', $settings, false );
+
+		// Also persist into the active profile so Save always keeps the profile in sync.
+		$profile_id = sanitize_key( $_POST['active_profile'] ?? 'default' );
+		WPWAF_Profiles::save_settings_to_profile( $profile_id, $settings );
+
 		wp_send_json_success( [ 'message' => 'Settings saved.' ] );
+		wp_die();
+	}
+
+	// ── Profile handlers ───────────────────────────────────────────────────────
+
+	public function profile_switch(): void {
+		$this->check();
+		$id = sanitize_key( $_POST['profile_id'] ?? '' );
+		if ( empty( $id ) ) {
+			wp_send_json_error( [ 'message' => 'profile_id required.' ] ); wp_die();
+		}
+		$profiles = WPWAF_Profiles::all();
+		if ( ! isset( $profiles[ $id ] ) ) {
+			wp_send_json_error( [ 'message' => 'Profile not found.' ] ); wp_die();
+		}
+		update_option( 'wpwaf_active_profile', $id, false );
+		wp_send_json_success( [
+			'profile_id' => $id,
+			'settings'   => $profiles[ $id ]['settings'],
+		] );
+		wp_die();
+	}
+
+	public function profile_create(): void {
+		$this->check();
+		$name         = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$settings_raw = wp_unslash( $_POST['settings'] ?? '' );
+		$settings     = json_decode( $settings_raw, associative: true );
+		if ( empty( $name ) || ! is_array( $settings ) ) {
+			wp_send_json_error( [ 'message' => 'Name and settings required.' ] ); wp_die();
+		}
+		$profiles = WPWAF_Profiles::all();
+		if ( count( $profiles ) >= 10 ) {
+			wp_send_json_error( [ 'message' => 'Maximum of 10 profiles reached.' ] ); wp_die();
+		}
+		$settings = WPWAF_Rule_Builder::sanitize_settings( $settings );
+		$id       = WPWAF_Profiles::create( $name, $settings );
+		update_option( 'wpwaf_active_profile', $id, false );
+		wp_send_json_success( [
+			'profile_id' => $id,
+			'profiles'   => WPWAF_Profiles::for_js(),
+		] );
+		wp_die();
+	}
+
+	public function profile_delete(): void {
+		$this->check();
+		$id = sanitize_key( $_POST['profile_id'] ?? '' );
+		if ( $id === 'default' ) {
+			wp_send_json_error( [ 'message' => 'The Default profile cannot be deleted.' ] ); wp_die();
+		}
+		WPWAF_Profiles::delete( $id );
+		// Fall back to Default if active profile was deleted.
+		if ( get_option( 'wpwaf_active_profile' ) === $id ) {
+			update_option( 'wpwaf_active_profile', 'default', false );
+		}
+		wp_send_json_success( [
+			'profiles'          => WPWAF_Profiles::for_js(),
+			'active_profile_id' => get_option( 'wpwaf_active_profile', 'default' ),
+		] );
+		wp_die();
+	}
+
+	// ── Domain profile handlers ────────────────────────────────────────────────
+
+	public function domain_profile_switch(): void {
+		$this->check();
+		$id = sanitize_key( $_POST['profile_id'] ?? '' );
+		if ( empty( $id ) ) {
+			wp_send_json_error( [ 'message' => 'profile_id required.' ] ); wp_die();
+		}
+		$profiles = WPWAF_Domain_Profiles::all();
+		if ( ! isset( $profiles[ $id ] ) ) {
+			wp_send_json_error( [ 'message' => 'Profile not found.' ] ); wp_die();
+		}
+		update_option( 'wpwaf_active_domain_profile', $id, false );
+		wp_send_json_success( [ 'profile_id' => $id ] );
+		wp_die();
+	}
+
+	public function domain_profile_save(): void {
+		$this->check();
+		$id      = sanitize_key( $_POST['profile_id'] ?? '' );
+		$raw_ids = json_decode( wp_unslash( $_POST['zone_ids'] ?? '[]' ), true );
+		if ( empty( $id ) || ! is_array( $raw_ids ) ) {
+			wp_send_json_error( [ 'message' => 'profile_id and zone_ids required.' ] ); wp_die();
+		}
+		$profiles = WPWAF_Domain_Profiles::all();
+		if ( ! isset( $profiles[ $id ] ) ) {
+			wp_send_json_error( [ 'message' => 'Profile not found.' ] ); wp_die();
+		}
+		$profiles[ $id ]['zone_ids'] = array_values( array_map( 'sanitize_text_field', $raw_ids ) );
+		update_option( 'wpwaf_domain_profiles', $profiles, false );
+		wp_send_json_success( [ 'message' => 'Domain profile saved.' ] );
+		wp_die();
+	}
+
+	public function domain_profile_create(): void {
+		$this->check();
+		$name     = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$raw_ids  = json_decode( wp_unslash( $_POST['zone_ids'] ?? '[]' ), true );
+		if ( empty( $name ) || ! is_array( $raw_ids ) ) {
+			wp_send_json_error( [ 'message' => 'Name and zone_ids required.' ] ); wp_die();
+		}
+		$profiles = WPWAF_Domain_Profiles::all();
+		if ( count( $profiles ) >= 10 ) {
+			wp_send_json_error( [ 'message' => 'Maximum of 10 domain profiles reached.' ] ); wp_die();
+		}
+		$id = WPWAF_Domain_Profiles::create( $name, $raw_ids );
+		update_option( 'wpwaf_active_domain_profile', $id, false );
+		wp_send_json_success( [
+			'profile_id'      => $id,
+			'domain_profiles' => WPWAF_Domain_Profiles::for_js(),
+		] );
+		wp_die();
+	}
+
+	public function domain_profile_delete(): void {
+		$this->check();
+		$id = sanitize_key( $_POST['profile_id'] ?? '' );
+		if ( $id === 'default' ) {
+			wp_send_json_error( [ 'message' => 'The Default domain profile cannot be deleted.' ] ); wp_die();
+		}
+		WPWAF_Domain_Profiles::delete( $id );
+		if ( get_option( 'wpwaf_active_domain_profile' ) === $id ) {
+			update_option( 'wpwaf_active_domain_profile', 'default', false );
+		}
+		wp_send_json_success( [
+			'domain_profiles'          => WPWAF_Domain_Profiles::for_js(),
+			'active_domain_profile_id' => get_option( 'wpwaf_active_domain_profile', 'default' ),
+		] );
 		wp_die();
 	}
 
