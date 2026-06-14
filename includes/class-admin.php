@@ -8,10 +8,34 @@ class WPWAF_Admin {
 	public static function init(): void {
 		$self = new self();
 		add_action( 'admin_menu',            [ $self, 'register_menu' ] );
+		add_action( 'admin_menu',            [ $self, 'maybe_hide_menu' ], 999 );
 		add_action( 'admin_enqueue_scripts', [ $self, 'enqueue_assets' ] );
-		// Dashboard widget — hooked here so $self is always available.
-		if ( WPWAF_Settings::get( 'dashboard_widget', true ) ) {
+
+		// Hide plugin from Plugins screen for locked-out users.
+		if ( ! WPWAF_Access::current_user_can() ) {
+			add_filter( 'all_plugins', static function ( array $plugins ): array {
+				unset( $plugins['wpwafmanager/wpwafmanager.php'] );
+				return $plugins;
+			} );
+		}
+		// Dashboard widget — only show to users with access.
+		if ( WPWAF_Access::current_user_can() && WPWAF_Settings::get( 'dashboard_widget', true ) ) {
 			add_action( 'wp_dashboard_setup', [ $self, 'register_dashboard_widget' ] );
+		}
+	}
+
+	/** Remove the plugin menu entirely for users not in the access allowlist. */
+	public function maybe_hide_menu(): void {
+		if ( WPWAF_Access::current_user_can() ) return;
+		remove_menu_page( 'wpwafmanager' );
+		// Also remove all submenu pages so they're not accessible via direct URL.
+		$submenus = [
+			'wpwafmanager-dns', 'wpwafmanager-zone-status', 'wpwafmanager-ip-rules',
+			'wpwafmanager-zone-controls', 'wpwafmanager-security-events',
+			'wpwafmanager-email-routing', 'wpwafmanager-settings', 'wpwafmanager-about',
+		];
+		foreach ( $submenus as $slug ) {
+			remove_submenu_page( 'wpwafmanager', $slug );
 		}
 	}
 

@@ -3,7 +3,7 @@
  * Plugin Name:       WP WAF Manager
  * Plugin URI:        https://wpwafmanager.com
  * Description:       Visual Cloudflare WAF rule builder, DNS manager, and zone analytics dashboard. Deploy battle-tested security rules to any Cloudflare zone in one click — no API docs required.
- * Version:           1.0.16
+ * Version:           1.0.19
  * Requires at least: 6.0
  * Tested up to:      6.7
  * Requires PHP:      8.0
@@ -18,7 +18,7 @@ declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPWAF_VERSION', '1.0.16' );
+define( 'WPWAF_VERSION', '1.0.19' );
 define( 'WPWAF_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WPWAF_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -47,6 +47,7 @@ require_once WPWAF_DIR . 'includes/class-accounts.php';
 require_once WPWAF_DIR . 'includes/class-rule-builder.php';
 require_once WPWAF_DIR . 'includes/class-profiles.php';
 require_once WPWAF_DIR . 'includes/class-domain-profiles.php';
+require_once WPWAF_DIR . 'includes/class-access.php';
 
 // Bootstrap profiles on first run.
 add_action( 'plugins_loaded', [ 'WPWAF_Profiles', 'bootstrap' ], 5 );
@@ -59,8 +60,8 @@ require_once WPWAF_DIR . 'includes/class-update-notifier.php';
 
 // ── Admin bar quick-purge & first-run notice ──────────────────────────────────
 add_action( 'admin_bar_menu', static function ( WP_Admin_Bar $bar ): void {
-	$cap = WPWAF_Settings::required_capability();
-	if ( ! current_user_can( $cap ) || ! WPWAF_Accounts::active() ) return;
+	if ( ! WPWAF_Access::current_user_can() ) return;
+	if ( ! WPWAF_Accounts::active() ) return;
 	if ( ! WPWAF_Settings::get( 'admin_bar_enabled', true ) ) return;
 
 	$zone_id   = WPWAF_Settings::get( 'admin_bar_zone_id', '' );
