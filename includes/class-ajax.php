@@ -43,6 +43,7 @@ class WPWAF_Ajax {
 
 		// Plugin settings
 		add_action( 'wp_ajax_wpwaf_save_plugin_settings', [ $self, 'save_plugin_settings' ] );
+		add_action( 'wp_ajax_wpwaf_save_access_users',    [ $self, 'save_access_users' ] );
 		add_action( 'wp_ajax_wpwaf_load_zones_for_settings', [ $self, 'load_zones_for_settings' ] );
 
 		// Zone status
@@ -82,7 +83,7 @@ class WPWAF_Ajax {
 
 	private function check(): void {
 		check_ajax_referer( 'wpwaf_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! WPWAF_Access::current_user_can() ) {
 			wp_send_json_error( [ 'message' => 'Insufficient permissions.' ], 403 );
 			wp_die();
 		}
@@ -1029,6 +1030,26 @@ class WPWAF_Ajax {
 		}
 		$result = WPWAF_Accounts::api()->delete_email_rule( $zone_id, $rule_id );
 		$result['success'] ? wp_send_json_success( [] ) : wp_send_json_error( $result );
+		wp_die();
+	}
+
+	// ── Access control ─────────────────────────────────────────────────────────
+
+	public function save_access_users(): void {
+		$this->check();
+		$raw      = wp_unslash( $_POST['user_ids'] ?? '[]' );
+		$user_ids = json_decode( $raw, true );
+		if ( ! is_array( $user_ids ) ) {
+			wp_send_json_error( [ 'message' => 'Invalid payload.' ] ); wp_die();
+		}
+		$error = WPWAF_Access::save( $user_ids );
+		if ( $error ) {
+			wp_send_json_error( [ 'message' => $error ] ); wp_die();
+		}
+		wp_send_json_success( [
+			'message'      => 'Access settings saved.',
+			'allowed_ids'  => WPWAF_Access::allowed_ids(),
+		] );
 		wp_die();
 	}
 

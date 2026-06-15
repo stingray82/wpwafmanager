@@ -1181,7 +1181,7 @@
 <script>
 /* Inline cfWAF data */
 window.cfWAF = <?php
-	$saved_settings = get_option( 'wpwaf_rule_settings', [] );
+	$saved_settings = WPWAF_Profiles::active_settings();
 	if ( empty( $saved_settings ) ) $saved_settings = WPWAF_Rule_Builder::default_settings();
 	$active     = WPWAF_Accounts::active();
 	$has_creds  = false;

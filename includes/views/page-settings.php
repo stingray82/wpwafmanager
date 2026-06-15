@@ -69,6 +69,17 @@ $s        = $settings; // passed from render_settings_page()
 .wpwaf-st-role-warn{color:#d97706 !important;font-size:11px;}
 .wpwaf-st-role-option.warn:has(input:checked){border-color:#d97706;background:#fffbeb;}
 
+/* User access list */
+.wpwaf-st-user-list{display:flex;flex-direction:column;gap:6px;width:100%;}
+.wpwaf-st-user-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--st-border);border-radius:8px;cursor:pointer;transition:all .12s;}
+.wpwaf-st-user-option:has(input:checked){border-color:var(--st-orange);background:#fff8f5;}
+.wpwaf-st-user-option.locked{cursor:default;opacity:.7;}
+.wpwaf-st-user-option input{accent-color:var(--st-orange);flex-shrink:0;width:16px;height:16px;}
+.wpwaf-st-user-info{display:flex;flex-direction:column;gap:1px;flex:1;}
+.wpwaf-st-user-info strong{font-size:13px;color:var(--st-dark);}
+.wpwaf-st-user-info span{font-size:11px;color:var(--st-muted);}
+.wpwaf-st-user-tag{font-size:10px;font-weight:700;color:var(--st-orange);background:#fff3ec;border:1px solid #ffe0cc;border-radius:4px;padding:2px 6px;white-space:nowrap;margin-left:auto;}
+
 
 @media(max-width:660px){
   .wpwaf-st-row{grid-template-columns:1fr;}
@@ -284,6 +295,63 @@ $s        = $settings; // passed from render_settings_page()
     </div>
   </div>
 
+  <!-- ── User Access ───────────────────────────────────────────────────────── -->
+  <div class="wpwaf-st-section">
+    <div class="wpwaf-st-section-header">
+      <span class="wpwaf-st-section-icon">👥</span>
+      <h2>User Access</h2>
+    </div>
+    <div class="wpwaf-st-section-body">
+
+      <div class="wpwaf-st-row">
+        <div>
+          <div class="wpwaf-st-label">Allowed admin users</div>
+          <div class="wpwaf-st-hint">Restrict plugin access to specific administrator accounts. When no users are selected, all administrators can access the plugin. Super Admins always have access. You cannot remove your own account.</div>
+        </div>
+        <div class="wpwaf-st-control">
+          <?php
+          $admin_users  = WPWAF_Access::admin_users();
+          $allowed_ids  = WPWAF_Access::allowed_ids();
+          $current_uid  = get_current_user_id();
+          $is_super     = is_multisite() && is_super_admin();
+          ?>
+          <div class="wpwaf-st-user-list" id="wpwaf-user-access-list">
+            <?php foreach ( $admin_users as $u ) :
+              $uid      = (int) $u->ID;
+              $is_self  = $uid === $current_uid;
+              $is_super_user = is_multisite() && is_super_admin( $uid );
+              $checked  = empty( $allowed_ids ) || in_array( $uid, $allowed_ids, true );
+              $locked   = $is_self || $is_super_user;
+            ?>
+            <label class="wpwaf-st-user-option <?php echo $locked ? 'locked' : ''; ?>">
+              <input type="checkbox"
+                     class="wpwaf-user-access-cb"
+                     value="<?php echo esc_attr( $uid ); ?>"
+                     <?php checked( $checked ); ?>
+                     <?php disabled( $locked ); ?>>
+              <span class="wpwaf-st-user-info">
+                <strong><?php echo esc_html( $u->display_name ); ?></strong>
+                <span><?php echo esc_html( $u->user_email ); ?></span>
+              </span>
+              <?php if ( $is_self ) : ?>
+                <span class="wpwaf-st-user-tag">You</span>
+              <?php elseif ( $is_super_user ) : ?>
+                <span class="wpwaf-st-user-tag">Super Admin</span>
+              <?php endif; ?>
+            </label>
+            <?php endforeach; ?>
+          </div>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+            <button type="button" id="wpwaf-save-access-users" class="wpwaf-st-btn-save" style="font-size:13px;padding:8px 18px;">Save Access Settings</button>
+            <span id="wpwaf-access-msg" class="wpwaf-st-save-msg"></span>
+          </div>
+          <p style="margin:10px 0 0;font-size:11px;color:var(--st-muted);">Saving with all users checked is the same as no restriction — all administrators have access.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ── Menu Display ──────────────────────────────────────────────────────── -->
   <div class="wpwaf-st-section">
     <div class="wpwaf-st-section-header">
@@ -442,6 +510,23 @@ if (HAS_CREDS) {
     }
   });
 }
+
+// ── Save Access Users ────────────────────────────────────────────────────────
+qs('#wpwaf-save-access-users')?.addEventListener('click', function(){
+  const btn  = this;
+  const msg  = qs('#wpwaf-access-msg');
+  const cbs  = document.querySelectorAll('.wpwaf-user-access-cb:checked');
+  const ids  = Array.from(cbs).map(cb => parseInt(cb.value, 10));
+  btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = ''; msg.className = 'wpwaf-st-save-msg';
+  ajax('wpwaf_save_access_users', { user_ids: JSON.stringify(ids) }, (res) => {
+    btn.disabled = false; btn.textContent = 'Save Access Settings';
+    if (res.success){
+      msg.textContent = '✓ Access settings saved'; msg.className = 'wpwaf-st-save-msg ok';
+    } else {
+      msg.textContent = '✗ ' + (res.data?.message || 'Save failed'); msg.className = 'wpwaf-st-save-msg err';
+    }
+  });
+});
 
 // ── Save ──────────────────────────────────────────────────────────────────────
 qs('#wpwaf-st-save')?.addEventListener('click', function(){
