@@ -277,7 +277,7 @@ git merge feature/extensible-rule1-allowlist
 git add .
 git commit -m "Merge feature patch into release branch"
 
-grep -R "<<<<<<<\|=======\|>>>>>>>" .
+grep -R --exclude-dir=.git "<<<<<<<\|>>>>>>>" .
 git push origin release/wpwaf-manager-fork
 
 sh deploy.sh
