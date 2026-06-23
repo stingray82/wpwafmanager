@@ -67,20 +67,32 @@ class WPWAF_Profiles {
 	/**
 	 * Create a new profile. Returns the new profile ID.
 	 */
-	public static function create( string $name, array $settings ): string {
+	public static function create( string $name, array $settings, string $notes = '' ): string {
 		$profiles = self::all();
 		if ( count( $profiles ) >= self::MAX ) return '';
 		$id              = 'profile_' . substr( md5( uniqid( '', true ) ), 0, 8 );
-		$profiles[ $id ] = [ 'id' => $id, 'name' => $name, 'settings' => $settings ];
+		$profiles[ $id ] = [ 'id' => $id, 'name' => $name, 'notes' => $notes, 'settings' => $settings ];
 		update_option( self::OPTION, $profiles, false );
 		return $id;
 	}
 
-	/** Overwrite a profile's saved settings. */
-	public static function save_settings_to_profile( string $id, array $settings ): void {
+	/** Overwrite a profile's saved settings and optionally its notes. */
+	public static function save_settings_to_profile( string $id, array $settings, string $notes = "\x00" ): void {
 		$profiles = self::all();
 		if ( ! isset( $profiles[ $id ] ) ) return;
 		$profiles[ $id ]['settings'] = $settings;
+		// Only update notes if explicitly passed (sentinel \x00 = not provided).
+		if ( $notes !== "\x00" ) {
+			$profiles[ $id ]['notes'] = $notes;
+		}
+		update_option( self::OPTION, $profiles, false );
+	}
+
+	/** Save notes for a profile without touching its settings. */
+	public static function save_notes( string $id, string $notes ): void {
+		$profiles = self::all();
+		if ( ! isset( $profiles[ $id ] ) ) return;
+		$profiles[ $id ]['notes'] = $notes;
 		update_option( self::OPTION, $profiles, false );
 	}
 
@@ -94,12 +106,13 @@ class WPWAF_Profiles {
 
 	/**
 	 * Return a safe array for JS — settings are stripped out,
-	 * only id and name are exposed to the frontend.
+	 * only id, name, and notes are exposed to the frontend.
 	 */
 	public static function for_js(): array {
 		return array_values( array_map( fn( $p ) => [
-			'id'   => $p['id'],
-			'name' => $p['name'],
+			'id'    => $p['id'],
+			'name'  => $p['name'],
+			'notes' => $p['notes'] ?? '',
 		], self::all() ) );
 	}
 }

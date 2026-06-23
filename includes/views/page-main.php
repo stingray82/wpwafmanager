@@ -213,6 +213,10 @@
 					<button type="button" class="cfwaf-btn cfwaf-btn-sm cfwaf-btn-danger" id="cfwaf-profile-delete" title="Delete selected profile">Delete</button>
 				</div>
 			</div>
+			<div class="cfwaf-profile-notes-wrap">
+				<textarea id="cfwaf-profile-notes" class="cfwaf-profile-notes" rows="2" placeholder="Profile notes — describe what this profile is for, which IPs or services it allows, etc."></textarea>
+				<span class="cfwaf-profile-notes-hint">Notes are saved with the profile when you hit Save.</span>
+			</div>
 
 			<!-- RULE 1 -->
 			<div class="cfwaf-rule-card">
@@ -359,7 +363,7 @@
 
 					<div class="cfwaf-section">
 						<h4>Custom User Agents to Allow</h4>
-						<p class="cfwaf-hint">Enter user agent strings to always skip all WAF rules. One per line. Uses a substring match &mdash; e.g. <code>SiteGuruCrawler</code> will match any user agent containing that string. To find blocked user agents, check <strong>Security &rarr; Events</strong> in your Cloudflare dashboard.</p>
+						<p class="cfwaf-hint">Enter user agent strings to always skip all WAF rules. One per line. Uses a substring match &mdash; e.g. <code>SiteGuruCrawler</code> will match any user agent containing that string. To find blocked user agents, check <strong>Security &rarr; Analytics &rarr; Events</strong> in your Cloudflare dashboard.</p>
 						<textarea id="cfwaf-allow-uas" class="cfwaf-ip-textarea" rows="4" placeholder="SiteGuruCrawler&#10;Google-NotebookLM&#10;MyCustomBot" spellcheck="false" autocomplete="off"></textarea>
 						<p class="cfwaf-hint cfwaf-hint-muted" id="cfwaf-allow-uas-count"></p>
 					</div>
