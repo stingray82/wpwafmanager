@@ -1,7 +1,7 @@
 {
     "slug": "wpwafmanager",
     "name": "WP WAF Manager",
-    "version": "1.0.19.1",
+    "version": "1.0.20.1",
     "author": "WP WAF Manager",
     "author_homepage": "https://www.wpwafmanager.com",
     "requires_php": "8.0",
@@ -10,7 +10,7 @@
     "sections": {
         "changelog": "<li>There are no changes beyond the adding of new filters</li>"
     },
-    "last_updated": "2026-06-15 13:56:55",
+    "last_updated": "2026-06-24 05:39:36",
     "download_url": "https://github.com/stingray82/wpwafmanager/releases/latest/download/wp-waf-manager.zip",
     "banners": {
         "low": "https://raw.githubusercontent.com/stingray82/wpwafmanager/release/wpwaf-manager-fork/uupd/banner-772x250.png",

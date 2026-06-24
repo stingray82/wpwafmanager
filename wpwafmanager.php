@@ -17,7 +17,7 @@
 declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
-define( 'WPWAF_VERSION', '1.0.20' );st
+define('WPWAF_VERSION', '1.0.20.1');st
 define( 'WPWAF_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WPWAF_URL',     plugin_dir_url( __FILE__ ) );
 
