@@ -28,6 +28,7 @@ class WPWAF_Ajax {
 		add_action( 'wp_ajax_wpwaf_profile_switch',              [ $self, 'profile_switch' ] );
 		add_action( 'wp_ajax_wpwaf_profile_create',              [ $self, 'profile_create' ] );
 		add_action( 'wp_ajax_wpwaf_profile_delete',              [ $self, 'profile_delete' ] );
+		add_action( 'wp_ajax_wpwaf_profile_save_notes',          [ $self, 'profile_save_notes' ] );
 		// Domain profile management
 		add_action( 'wp_ajax_wpwaf_domain_profile_switch',       [ $self, 'domain_profile_switch' ] );
 		add_action( 'wp_ajax_wpwaf_domain_profile_save',         [ $self, 'domain_profile_save' ] );
@@ -294,7 +295,8 @@ class WPWAF_Ajax {
 
 		// Also persist into the active profile so Save always keeps the profile in sync.
 		$profile_id = sanitize_key( $_POST['active_profile'] ?? 'default' );
-		WPWAF_Profiles::save_settings_to_profile( $profile_id, $settings );
+		$notes      = sanitize_textarea_field( wp_unslash( $_POST['profile_notes'] ?? "\x00" ) );
+		WPWAF_Profiles::save_settings_to_profile( $profile_id, $settings, $notes );
 
 		wp_send_json_success( [ 'message' => 'Settings saved.' ] );
 		wp_die();
@@ -323,6 +325,7 @@ class WPWAF_Ajax {
 	public function profile_create(): void {
 		$this->check();
 		$name         = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$notes        = sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) );
 		$settings_raw = wp_unslash( $_POST['settings'] ?? '' );
 		$settings     = json_decode( $settings_raw, associative: true );
 		if ( empty( $name ) || ! is_array( $settings ) ) {
@@ -333,12 +336,24 @@ class WPWAF_Ajax {
 			wp_send_json_error( [ 'message' => 'Maximum of 10 profiles reached.' ] ); wp_die();
 		}
 		$settings = WPWAF_Rule_Builder::sanitize_settings( $settings );
-		$id       = WPWAF_Profiles::create( $name, $settings );
+		$id       = WPWAF_Profiles::create( $name, $settings, $notes );
 		update_option( 'wpwaf_active_profile', $id, false );
 		wp_send_json_success( [
 			'profile_id' => $id,
 			'profiles'   => WPWAF_Profiles::for_js(),
 		] );
+		wp_die();
+	}
+
+	public function profile_save_notes(): void {
+		$this->check();
+		$id    = sanitize_key( $_POST['profile_id'] ?? '' );
+		$notes = sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) );
+		if ( empty( $id ) ) {
+			wp_send_json_error( [ 'message' => 'profile_id required.' ] ); wp_die();
+		}
+		WPWAF_Profiles::save_notes( $id, $notes );
+		wp_send_json_success( [ 'message' => 'Notes saved.' ] );
 		wp_die();
 	}
 

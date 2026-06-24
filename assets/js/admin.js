@@ -615,6 +615,10 @@
 			syncToUI();
 			updateProfileDeleteBtn();
 			updateSaveLabel();
+			// Populate notes for the loaded profile
+			const notesEl  = qs('#cfwaf-profile-notes');
+			const profile   = (WAF.profiles || []).find(function (p) { return p.id === activeProfileId; });
+			if (notesEl) notesEl.value = (profile && profile.notes) ? profile.notes : '';
 			toast('\u2713 Profile loaded');
 		});
 	});
@@ -626,7 +630,9 @@
 		const name = prompt('Profile name:');
 		if (!name || !name.trim()) return;
 		syncFromUI();
-		ajax('wpwaf_profile_create', { name: name.trim(), settings: JSON.stringify(settings) }, function (res) {
+		const notesEl = qs('#cfwaf-profile-notes');
+		const notes   = notesEl ? notesEl.value : '';
+		ajax('wpwaf_profile_create', { name: name.trim(), notes: notes, settings: JSON.stringify(settings) }, function (res) {
 			if (!res.success) { toast('\u2717 ' + (res.data.message || 'Could not create profile'), 'error'); return; }
 			WAF.profiles    = res.data.profiles;
 			activeProfileId = res.data.profile_id;
@@ -652,16 +658,30 @@
 
 	renderProfileSelect();
 
+	// Populate notes for active profile on page load
+	(function () {
+		const notesEl = qs('#cfwaf-profile-notes');
+		const profile  = (WAF.profiles || []).find(function (p) { return p.id === activeProfileId; });
+		if (notesEl && profile && profile.notes) notesEl.value = profile.notes;
+	})();
+
 	// ── Save settings ─────────────────────────────────────────────────────────
 
 	on(qs('#cfwaf-save-settings'), 'click', function () {
 		syncFromUI();
-		const btn = qs('#cfwaf-save-settings');
-		btn.innerHTML = '<span class="dashicons dashicons-update"></span> Saving\u2026';
-		btn.disabled  = true;
-		ajax('wpwaf_save_settings', { settings: JSON.stringify(settings), active_profile: activeProfileId }, function (res) {
+		const btn      = qs('#cfwaf-save-settings');
+		const notesEl  = qs('#cfwaf-profile-notes');
+		const notes    = notesEl ? notesEl.value : '';
+		btn.innerHTML  = '<span class="dashicons dashicons-update"></span> Saving\u2026';
+		btn.disabled   = true;
+		ajax('wpwaf_save_settings', { settings: JSON.stringify(settings), active_profile: activeProfileId, profile_notes: notes }, function (res) {
 			btn.disabled  = false;
 			updateSaveLabel();
+			// Keep local profiles notes in sync
+			if (res.success) {
+				const profile = (WAF.profiles || []).find(function (p) { return p.id === activeProfileId; });
+				if (profile) profile.notes = notes;
+			}
 			res.success ? toast('\u2713 Settings saved!') : toast('\u2717 Save failed', 'error');
 		});
 	});
