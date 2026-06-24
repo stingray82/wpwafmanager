@@ -5,7 +5,7 @@
  * Tested up to:      7.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
- * Version:           1.0.20.1
+ * Version:           1.0.20.2
  * Author:            WP WAF Manager
  * Author URI:        https://www.wpwafmanager.com
  * License:           GPL-2.0-or-later
@@ -17,7 +17,7 @@
 declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
-define('WPWAF_VERSION', '1.0.20.1');st
+define('WPWAF_VERSION', '1.0.20.2');
 define( 'WPWAF_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WPWAF_URL',     plugin_dir_url( __FILE__ ) );
 
